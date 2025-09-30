@@ -435,8 +435,8 @@ async def upload_catalog(
         }
     
     except Exception as e:
-        logger.error(f"Excel processing error: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Error processing Excel file: {str(e)}")
+        logger.error(f"Catalog file processing error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error processing {file_extension.upper() if 'file_extension' in locals() else 'file'}: {str(e)}")
 
 @api_router.get("/products", response_model=List[Product])
 async def get_products(current_user: User = Depends(get_current_user)):
