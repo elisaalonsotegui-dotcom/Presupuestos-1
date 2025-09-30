@@ -371,9 +371,10 @@ async def upload_excel(
                 product = Product(
                     name=name,
                     description=description,
-                    base_price=price,
+                    base_price=base_price,
                     category=category,
                     characteristics=characteristics,
+                    image_url=image_url,
                     user_id=current_user.id
                 )
                 products.append(product.dict())
