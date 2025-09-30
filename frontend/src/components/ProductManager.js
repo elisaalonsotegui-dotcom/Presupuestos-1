@@ -203,6 +203,7 @@ const ProductManager = () => {
                     <li>• -500, +500, +2000, +5000 (precios)</li>
                     <li>• PRINT CODE / TÉCNICA DE GRABACIÓN</li>
                     <li>• MEDIDA MÁXIMA DE GRABACIÓN</li>
+                    <li>• <strong>URL_IMAGEN</strong> (enlace a foto del producto)</li>
                   </ul>
                 </div>
               </div>
