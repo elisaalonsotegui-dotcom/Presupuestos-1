@@ -253,10 +253,22 @@ async def upload_catalog(
         
         # Log available columns for debugging
         available_columns = list(df.columns)
-        logger.info(f"Excel columns found: {available_columns}")
+        logger.info(f"Catalog file columns found: {available_columns}")
+        
+        # Clean the dataframe - remove completely empty rows
+        df = df.dropna(how='all')
+        
+        # If DataFrame is empty after cleaning, return error
+        if df.empty:
+            raise HTTPException(status_code=400, detail="The file appears to be empty or contains no valid data")
         
         # Normalize column names to lowercase for matching
         df.columns = df.columns.str.lower().str.strip()
+        
+        # Remove any unnamed columns (often created by CSV parsing issues)
+        df = df.loc[:, ~df.columns.str.contains('^unnamed', case=False)]
+        
+        logger.info(f"Cleaned columns: {list(df.columns)}")
         
         # Define column mappings for provider Excel format
         column_mappings = {
