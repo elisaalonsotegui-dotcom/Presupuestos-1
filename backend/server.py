@@ -1164,8 +1164,11 @@ async def generate_smart_quote(
             logger.warning(f"Error processing product: {e}")
             continue
     
+    if not products:
+        raise HTTPException(status_code=404, detail="No se pudieron procesar los productos encontrados")
+    
     # Sort products by price for tiered quotes
-    products.sort(key=lambda x: x["base_price"])
+    products.sort(key=lambda x: x.get("base_price", 0))
     
     # Calculate marking costs
     marking_costs_per_unit = 0
