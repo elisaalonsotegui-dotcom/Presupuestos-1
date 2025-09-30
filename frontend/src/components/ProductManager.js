@@ -214,7 +214,8 @@ const ProductManager = () => {
                   <p className="font-medium">Dimensiones y precios:</p>
                   <ul className="space-y-1">
                     <li>• PROFUNDIDAD, PESO, ANCHO, ALTO</li>
-                    <li>• -500, +500, +2000, +5000 (precios)</li>
+                    <li>• <strong>PRECIO CONFIDENCIAL</strong>, PRECIO, PVP (precio base)</li>
+                    <li>• -500, +500, +2000, +5000 (precios por volumen)</li>
                     <li>• PRINT CODE / TÉCNICA DE GRABACIÓN</li>
                     <li>• MEDIDA MÁXIMA DE GRABACIÓN</li>
                     <li>• <strong>URL_IMAGEN</strong> (enlace a foto del producto)</li>
