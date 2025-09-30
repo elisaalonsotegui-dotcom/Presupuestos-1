@@ -296,14 +296,14 @@ const ProductManager = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-emerald-50 p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-emerald-700">{products.length}</div>
+                <div className="text-2xl font-bold text-emerald-700">{pagination.total_count}</div>
                 <div className="text-sm text-emerald-600">Total productos</div>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg text-center">
                 <div className="text-2xl font-bold text-blue-700">
                   {[...new Set(products.map(p => p.category))].length}
                 </div>
-                <div className="text-sm text-blue-600">Categorías</div>
+                <div className="text-sm text-blue-600">Categorías (página actual)</div>
               </div>
             </div>
             
