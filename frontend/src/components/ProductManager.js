@@ -43,12 +43,15 @@ const ProductManager = () => {
     }
   };
 
-  const handleExcelUpload = async (event) => {
+  const handleCatalogUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      toast.error('Por favor sube un archivo Excel (.xlsx o .xls)');
+    const validExtensions = ['.xlsx', '.xls', '.csv'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (!validExtensions.includes(fileExtension)) {
+      toast.error('Por favor sube un archivo Excel (.xlsx, .xls) o CSV (.csv)');
       return;
     }
 
@@ -58,18 +61,18 @@ const ProductManager = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/products/upload-excel`, formData, {
+      const response = await axios.post(`${API}/products/upload-catalog`, formData, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
 
-      toast.success(`¡${response.data.count} productos subidos exitosamente!`);
+      toast.success(`¡${response.data.count} productos subidos desde ${response.data.file_type}!`);
       fetchProducts();
     } catch (error) {
-      console.error('Error uploading Excel:', error);
-      toast.error(error.response?.data?.detail || 'Error al subir el archivo');
+      console.error('Error uploading catalog:', error);
+      toast.error(error.response?.data?.detail || 'Error al procesar el archivo');
     } finally {
       setLoading(false);
       event.target.value = '';
