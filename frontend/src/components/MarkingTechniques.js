@@ -88,6 +88,39 @@ const MarkingTechniques = () => {
     }
   };
 
+  const handlePdfUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.pdf')) {
+      toast.error('Por favor sube un archivo PDF');
+      return;
+    }
+
+    setUploadingPdf(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/marking-techniques/upload-pdf`, formData, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      toast.success(`¡${response.data.count} técnicas de marcaje extraídas del PDF!`);
+      fetchTechniques();
+    } catch (error) {
+      console.error('Error uploading PDF:', error);
+      toast.error(error.response?.data?.detail || 'Error al procesar el PDF');
+    } finally {
+      setUploadingPdf(false);
+      event.target.value = '';
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
