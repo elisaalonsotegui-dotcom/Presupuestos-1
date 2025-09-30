@@ -285,6 +285,7 @@ async def upload_catalog(
             'price_500_plus': ['+500', 'mas_500', 'price_500_plus', '500+', '>500'],
             'price_2000_plus': ['+2000', 'mas_2000', 'price_2000_plus', '2000+', '>2000'],
             'price_5000_plus': ['+5000', 'mas_5000', 'price_5000_plus', '5000+', '>5000'],
+            'price_base': ['precio_confidencial', 'precio confidencial', 'precio', 'price', 'coste', 'cost', 'valor', 'importe', 'pvp', 'tarifa'],
             'print_code': ['print_code', 'print code', 'max.colores', 'técnica de grabación', 'tecnica_grabacion', 'colores'],
             'max_print_area': ['medida_máxima_de_grabación', 'medida maxima grabacion', 'max_print_area', 'area_impresion'],
             'image_url': ['url_imagen', 'foto', 'image_url', 'imagen', 'photo', 'picture', 'url_foto', 'link_imagen']
