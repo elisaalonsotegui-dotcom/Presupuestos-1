@@ -15,6 +15,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const MarkingTechniques = () => {
   const [techniques, setTechniques] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
   const [newTechnique, setNewTechnique] = useState({
     name: '',
     cost_per_unit: '',
