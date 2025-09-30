@@ -353,6 +353,30 @@ async def create_product(
     await db.products.insert_one(product.dict())
     return product
 
+@api_router.delete("/products/{product_id}")
+async def delete_product(
+    product_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    # Verify product belongs to user
+    product = await db.products.find_one({"id": product_id, "user_id": current_user.id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Delete product
+    result = await db.products.delete_one({"id": product_id, "user_id": current_user.id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return {"message": "Product deleted successfully"}
+
+@api_router.delete("/products")
+async def delete_all_products(current_user: User = Depends(get_current_user)):
+    """Delete all products for the current user"""
+    result = await db.products.delete_many({"user_id": current_user.id})
+    return {"message": f"Deleted {result.deleted_count} products"}
+
 # Marking techniques routes
 @api_router.post("/marking-techniques", response_model=MarkingTechnique)
 async def create_marking_technique(
