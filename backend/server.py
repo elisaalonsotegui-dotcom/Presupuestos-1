@@ -223,7 +223,31 @@ async def upload_catalog(
         contents = await file.read()
         
         if file_extension == 'csv':
-            df = pd.read_csv(BytesIO(contents))
+            # Handle CSV files with inconsistent column counts
+            try:
+                df = pd.read_csv(BytesIO(contents))
+            except pd.errors.ParserError as e:
+                # If parsing fails due to inconsistent columns, try with error handling
+                logger.info(f"CSV parsing failed with standard method, trying with error handling: {str(e)}")
+                try:
+                    # Read CSV with error handling for bad lines
+                    df = pd.read_csv(BytesIO(contents), on_bad_lines='skip', sep=None, engine='python')
+                except Exception as e2:
+                    logger.info(f"Second CSV attempt failed, trying with different separators: {str(e2)}")
+                    # Try different common separators
+                    for sep in [',', ';', '\t', '|']:
+                        try:
+                            contents_copy = BytesIO(contents.getvalue() if hasattr(contents, 'getvalue') else contents)
+                            df = pd.read_csv(contents_copy, sep=sep, on_bad_lines='skip')
+                            if len(df.columns) > 1:  # If we got multiple columns, it's likely correct
+                                logger.info(f"Successfully parsed CSV with separator: '{sep}'")
+                                break
+                        except Exception:
+                            continue
+                    else:
+                        # If all separators fail, read as single column and try to split
+                        contents_copy = BytesIO(contents.getvalue() if hasattr(contents, 'getvalue') else contents)
+                        df = pd.read_csv(contents_copy, sep=None, engine='python', on_bad_lines='skip')
         else:
             df = pd.read_excel(BytesIO(contents))
         
