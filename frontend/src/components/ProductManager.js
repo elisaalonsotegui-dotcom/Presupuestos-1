@@ -229,11 +229,24 @@ const ProductManager = () => {
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-700" data-testid="add-product-button">
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 mb-2" data-testid="add-product-button">
                   <Plus className="w-4 h-4 mr-2" />
                   Añadir Producto Manual
                 </Button>
               </DialogTrigger>
+            </Dialog>
+            
+            {products.length > 0 && (
+              <Button 
+                onClick={handleDeleteAllProducts}
+                variant="outline"
+                className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                data-testid="delete-all-products-button"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Eliminar Todos
+              </Button>
+            )}
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Nuevo Producto</DialogTitle>
