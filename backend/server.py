@@ -678,6 +678,144 @@ def parse_marking_pdf(pdf_content: bytes) -> list:
     
     return predefined_techniques
 
+def parse_marking_csv(csv_content: bytes) -> list:
+    """Parse CSV content and extract marking techniques with prices"""
+    techniques = []
+    
+    try:
+        # Convert bytes to string and read CSV
+        csv_string = csv_content.decode('utf-8')
+        df = pd.read_csv(BytesIO(csv_content))
+        
+        logger.info(f"CSV columns found: {list(df.columns)}")
+        
+        # Common column name mappings for tariff CSV files
+        technique_col_names = ['technique', 'tecnica', 'service', 'servicio', 'method', 'metodo', 'type', 'tipo']
+        price_col_names = ['price', 'precio', 'cost', 'coste', 'tariff', 'tarifa', 'rate', 'valor']
+        description_col_names = ['description', 'descripcion', 'desc', 'details', 'detalles', 'notes', 'notas']
+        
+        # Normalize column names for matching
+        df.columns = df.columns.str.lower().str.strip()
+        
+        def find_column_csv(possible_names):
+            for name in possible_names:
+                if name in df.columns:
+                    return name
+            return None
+        
+        technique_col = find_column_csv(technique_col_names)
+        price_col = find_column_csv(price_col_names)
+        description_col = find_column_csv(description_col_names)
+        
+        # If standard columns not found, try to infer from data
+        if not technique_col:
+            # Look for columns with text that might be techniques
+            for col in df.columns:
+                if df[col].dtype == 'object' and any(keyword in col for keyword in ['tech', 'serv', 'met', 'tip']):
+                    technique_col = col
+                    break
+        
+        if not price_col:
+            # Look for numeric columns that might be prices
+            for col in df.columns:
+                if pd.api.types.is_numeric_dtype(df[col]) and any(keyword in col for keyword in ['price', 'cost', 'tar']):
+                    price_col = col
+                    break
+        
+        logger.info(f"Mapped CSV columns - Technique: {technique_col}, Price: {price_col}, Description: {description_col}")
+        
+        if not technique_col:
+            # Fallback: use first text column
+            text_columns = [col for col in df.columns if df[col].dtype == 'object']
+            technique_col = text_columns[0] if text_columns else df.columns[0]
+        
+        if not price_col:
+            # Fallback: use first numeric column
+            numeric_columns = [col for col in df.columns if pd.api.types.is_numeric_dtype(df[col])]
+            price_col = numeric_columns[0] if numeric_columns else None
+        
+        # Extract techniques from CSV
+        for index, row in df.iterrows():
+            try:
+                if pd.isna(row[technique_col]) or str(row[technique_col]).strip() == '':
+                    continue
+                
+                technique_name = str(row[technique_col]).strip()
+                
+                # Extract price
+                price = 0.0
+                if price_col and pd.notna(row[price_col]):
+                    try:
+                        price_str = str(row[price_col]).replace(',', '.').replace('€', '').replace('$', '').strip()
+                        price = float(price_str)
+                    except (ValueError, TypeError):
+                        price = 0.0
+                
+                # Extract description
+                description = ''
+                if description_col and pd.notna(row[description_col]):
+                    description = str(row[description_col]).strip()
+                else:
+                    # Use other columns as description
+                    other_cols = [col for col in df.columns if col not in [technique_col, price_col]]
+                    desc_parts = []
+                    for col in other_cols[:3]:  # Max 3 additional columns
+                        if pd.notna(row[col]):
+                            desc_parts.append(f"{col}: {str(row[col])}")
+                    description = " | ".join(desc_parts)
+                
+                if technique_name and price > 0:
+                    techniques.append({
+                        'name': technique_name,
+                        'price': price,
+                        'description': description or f"Técnica extraída del CSV - {technique_name}"
+                    })
+                    
+            except Exception as row_error:
+                logger.warning(f"Error processing CSV row {index}: {str(row_error)}")
+                continue
+        
+        # If no techniques found with standard approach, try alternative parsing
+        if not techniques:
+            logger.info("Standard parsing failed, trying alternative approach...")
+            
+            # Look for any column that contains price-like data
+            for col in df.columns:
+                try:
+                    # Try to convert column to numeric
+                    numeric_data = pd.to_numeric(df[col], errors='coerce')
+                    if not numeric_data.isna().all() and numeric_data.max() < 1000:  # Reasonable price range
+                        price_col = col
+                        break
+                except:
+                    continue
+            
+            # Use first column as technique name and found price column
+            if price_col and len(df.columns) >= 1:
+                technique_col = df.columns[0]
+                for index, row in df.iterrows():
+                    try:
+                        technique_name = str(row[technique_col]).strip()
+                        price_str = str(row[price_col]).replace(',', '.').replace('€', '').replace('$', '').strip()
+                        price = float(price_str)
+                        
+                        if technique_name and price > 0:
+                            techniques.append({
+                                'name': f"{technique_name}",
+                                'price': price,
+                                'description': f"Extraído de CSV CIFRA - {technique_name}"
+                            })
+                    except:
+                        continue
+        
+        logger.info(f"Extracted {len(techniques)} techniques from CSV")
+        return techniques
+        
+    except Exception as e:
+        logger.error(f"CSV parsing error: {str(e)}")
+        # Return empty list if parsing fails
+        return []
+
 # Quote routes
 @api_router.post("/quotes/generate", response_model=Quote)
 async def generate_quote(
