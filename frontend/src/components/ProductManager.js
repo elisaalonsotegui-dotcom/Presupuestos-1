@@ -214,18 +214,25 @@ const ProductManager = () => {
               <p className="text-sm text-green-700 font-medium mb-3">📥 Descargar Plantillas Excel:</p>
               <div className="space-y-2">
                 <a 
-                  href={`${BACKEND_URL}/api/download/plantilla-completa`}
+                  href={`${BACKEND_URL}/api/download/plantilla-proveedor`}
                   download
                   className="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
                 >
-                  📋 Descargar Plantilla Completa
+                  📋 Descargar Plantilla Proveedor 2025
+                </a>
+                <a 
+                  href={`${BACKEND_URL}/api/download/plantilla-vacia`}
+                  download
+                  className="block w-full text-center px-4 py-2 bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition-colors text-sm"
+                >
+                  📄 Descargar Plantilla Vacía
                 </a>
                 <a 
                   href={`${BACKEND_URL}/api/download/plantilla-simple`}
                   download
-                  className="block w-full text-center px-4 py-2 bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition-colors text-sm"
+                  className="block w-full text-center px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition-colors text-sm"
                 >
-                  📄 Descargar Plantilla Simple
+                  📑 Descargar Plantilla Simple (básica)
                 </a>
               </div>
               <p className="text-xs text-green-600 mt-2">
