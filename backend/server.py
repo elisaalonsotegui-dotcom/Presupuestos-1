@@ -476,7 +476,18 @@ async def upload_catalog(
     
     except Exception as e:
         logger.error(f"Catalog file processing error: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Error processing {file_extension.upper() if 'file_extension' in locals() else 'file'}: {str(e)}")
+        error_detail = str(e)
+        
+        # Provide more helpful error messages for common CSV issues
+        if 'tokenizing' in error_detail or 'fields' in error_detail:
+            error_detail = "El archivo CSV tiene formato inconsistente. Esto puede ocurrir si algunas filas tienen diferentes números de columnas. Intenta guardar el archivo como Excel (.xlsx) para mejor compatibilidad."
+        elif 'encoding' in error_detail:
+            error_detail = "Problema de codificación del archivo. Intenta guardar el CSV con codificación UTF-8."
+        elif 'separator' in error_detail:
+            error_detail = "No se pudo detectar el separador del CSV. Asegúrate de que use comas, punto y coma, o tabulaciones como separadores."
+        
+        file_type = file_extension.upper() if 'file_extension' in locals() else 'archivo'
+        raise HTTPException(status_code=400, detail=f"Error procesando {file_type}: {error_detail}")
 
 @api_router.get("/products", response_model=List[Product])
 async def get_products(current_user: User = Depends(get_current_user)):
