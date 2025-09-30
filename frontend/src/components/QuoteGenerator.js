@@ -44,10 +44,12 @@ const QuoteGenerator = () => {
   const fetchCategories = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/products`, {
+      // Get a sample of products to extract categories - limit to avoid performance issues
+      const response = await axios.get(`${API}/products?page=1&limit=1000`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const uniqueCategories = [...new Set(response.data.map(p => p.category).filter(Boolean))];
+      const products = response.data.products || [];
+      const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
