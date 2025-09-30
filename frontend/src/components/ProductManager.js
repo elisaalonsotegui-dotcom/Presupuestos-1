@@ -165,20 +165,20 @@ const ProductManager = () => {
             <div className="upload-area">
               <input
                 type="file"
-                accept=".xlsx,.xls"
-                onChange={handleExcelUpload}
+                accept=".xlsx,.xls,.csv"
+                onChange={handleCatalogUpload}
                 className="hidden"
-                id="excel-upload"
-                data-testid="excel-file-input"
+                id="catalog-upload"
+                data-testid="catalog-file-input"
               />
-              <label htmlFor="excel-upload" className="cursor-pointer block">
+              <label htmlFor="catalog-upload" className="cursor-pointer block">
                 <div className="text-center py-6">
                   <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-sm text-gray-600 mb-2">
-                    Haz clic para seleccionar un archivo Excel
+                    Haz clic para seleccionar catálogo de proveedor
                   </p>
                   <p className="text-xs text-gray-400">
-                    Formatos: .xlsx, .xls
+                    Formatos: Excel (.xlsx, .xls) o CSV (.csv)
                   </p>
                 </div>
               </label>
