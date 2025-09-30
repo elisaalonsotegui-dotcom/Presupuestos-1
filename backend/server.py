@@ -362,7 +362,7 @@ async def upload_excel(
                 mapped_cols = [ref_col, name_col, desc_col, category_col, subcategory_col, 
                              depth_col, weight_col, width_col, height_col,
                              price_500_minus_col, price_500_plus_col, price_2000_plus_col, price_5000_plus_col,
-                             print_code_col, max_print_area_col]
+                             print_code_col, max_print_area_col, image_url_col]
                 
                 for col in df.columns:
                     if col not in mapped_cols and pd.notna(row[col]):
