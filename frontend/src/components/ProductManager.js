@@ -23,6 +23,7 @@ const ProductManager = () => {
     category: '',
     characteristics: {}
   });
+  const [deletingProduct, setDeletingProduct] = useState(null);
 
   useEffect(() => {
     fetchProducts();
