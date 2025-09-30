@@ -215,39 +215,25 @@ const QuoteGenerator = () => {
           <Card className="border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Package className="w-5 h-5 text-emerald-600" />
-                <span>Criterios de Búsqueda</span>
+                <FileText className="w-5 h-5 text-emerald-600" />
+                <span>Ejemplos de Solicitudes</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="category">Categoría de productos</Label>
-                <Select 
-                  value={quoteData.search_criteria.category} 
-                  onValueChange={(value) => setQuoteData({
-                    ...quoteData,
-                    search_criteria: { ...quoteData.search_criteria, category: value }
-                  })}
-                >
-                  <SelectTrigger data-testid="category-select">
-                    <SelectValue placeholder="Selecciona una categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <CardContent className="space-y-3">
+              <div className="bg-emerald-50 p-3 rounded-lg">
+                <p className="text-sm text-emerald-700 font-medium mb-1">💡 Ejemplos de cómo describir:</p>
+                <ul className="text-xs text-emerald-600 space-y-1">
+                  <li>• "100 camisetas personalizadas a 1 color en pecho"</li>
+                  <li>• "50 gorras con bordado de logo en frontal"</li>
+                  <li>• "200 tazas sublimadas con diseño a todo color"</li>
+                  <li>• "75 polos con serigrafía de empresa"</li>
+                </ul>
               </div>
-              {categories.length === 0 && (
-                <div className="bg-amber-50 p-4 rounded-lg">
-                  <p className="text-sm text-amber-700">
-                    No hay categorías disponibles. Asegúrate de tener productos cargados en el sistema.
-                  </p>
-                </div>
-              )}
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-xs text-blue-700">
+                  <strong>El sistema es inteligente:</strong> detecta automáticamente el tipo de producto y sugiere las mejores opciones en 3 niveles de calidad y precio.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
