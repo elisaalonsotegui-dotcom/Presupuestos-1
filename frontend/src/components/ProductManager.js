@@ -184,16 +184,30 @@ const ProductManager = () => {
               </label>
             </div>
             <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-700 font-medium mb-2">El sistema acepta múltiples formatos de Excel:</p>
-              <ul className="text-xs text-blue-600 space-y-1">
-                <li>• <strong>Nombres</strong>: nombre, producto, articulo, item, name</li>
-                <li>• <strong>Descripción</strong>: descripcion, description, desc, detalle</li>
-                <li>• <strong>Precio</strong>: precio, price, coste, cost, pvp, tarifa</li>
-                <li>• <strong>Categoría</strong>: categoria, category, tipo, clase, familia</li>
-                <li>• <strong>Otras columnas</strong> se guardan como características</li>
-              </ul>
+              <p className="text-sm text-blue-700 font-medium mb-2">Formato estándar de proveedor - Columnas reconocidas:</p>
+              <div className="grid grid-cols-2 gap-4 text-xs text-blue-600">
+                <div>
+                  <p className="font-medium">Información básica:</p>
+                  <ul className="space-y-1">
+                    <li>• REF. / Referencia</li>
+                    <li>• ARTÍCULO / Producto</li>
+                    <li>• DESCRIPCIÓN</li>
+                    <li>• CATEGORÍA</li>
+                    <li>• SUBCATEGORÍA</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Dimensiones y precios:</p>
+                  <ul className="space-y-1">
+                    <li>• PROFUNDIDAD, PESO, ANCHO, ALTO</li>
+                    <li>• -500, +500, +2000, +5000 (precios)</li>
+                    <li>• PRINT CODE / TÉCNICA DE GRABACIÓN</li>
+                    <li>• MEDIDA MÁXIMA DE GRABACIÓN</li>
+                  </ul>
+                </div>
+              </div>
               <p className="text-xs text-blue-500 mt-2">
-                💡 El sistema detecta automáticamente las columnas de tu Excel
+                💡 El sistema detecta automáticamente las columnas y maneja precios por volumen
               </p>
             </div>
             <div className="bg-green-50 p-4 rounded-lg">
