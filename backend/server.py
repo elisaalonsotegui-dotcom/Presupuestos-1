@@ -421,7 +421,13 @@ async def upload_catalog(
                 prices = [p for p in volume_pricing.values() if p > 0]
                 base_price = prices[0] if prices else 0.0
                 
-                # If no volume pricing found, try to use detected price columns
+                # If no volume pricing found, try to use base price column (like "Precio Confidencial")
+                if base_price == 0.0 and price_base_col:
+                    base_price = extract_price(price_base_col, row)
+                    if base_price > 0:
+                        volume_pricing['precio_base'] = base_price
+                
+                # If still no price found, try to use detected price columns
                 if base_price == 0.0 and detected_price_cols:
                     for price_col_info in detected_price_cols:
                         col = price_col_info['column']
@@ -429,7 +435,7 @@ async def upload_catalog(
                             base_price = extract_price(col, row)
                             if base_price > 0:
                                 # Also populate volume pricing with this single price
-                                volume_pricing['precio_base'] = base_price
+                                volume_pricing['precio_detectado'] = base_price
                                 break
                 
                 logger.debug(f"Row {index}: Base price={base_price}, Volume pricing={volume_pricing}")
