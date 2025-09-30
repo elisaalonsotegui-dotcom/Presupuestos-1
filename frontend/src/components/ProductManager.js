@@ -377,6 +377,22 @@ const ProductManager = () => {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteProduct(product.id, product.name)}
+                          disabled={deletingProduct === product.id}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          data-testid={`delete-product-${product.id}`}
+                        >
+                          {deletingProduct === product.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
