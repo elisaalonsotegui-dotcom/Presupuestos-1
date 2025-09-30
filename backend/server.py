@@ -378,6 +378,83 @@ async def delete_all_products(current_user: User = Depends(get_current_user)):
     result = await db.products.delete_many({"user_id": current_user.id})
     return {"message": f"Deleted {result.deleted_count} products"}
 
+# Download routes
+@api_router.get("/download/plantilla-completa")
+async def download_template_complete():
+    """Download complete Excel template"""
+    file_path = "/app/PLANTILLA_PRODUCTOS.xlsx"
+    
+    # Create the file if it doesn't exist
+    if not os.path.exists(file_path):
+        import pandas as pd
+        
+        data = [
+            {
+                'PRODUCTO': 'Camiseta Básica Unisex',
+                'DESCRIPCION': 'Camiseta 100% algodón, manga corta, cuello redondo',
+                'PRECIO': '12.50',
+                'CATEGORIA': 'Textil',
+                'TALLA': 'XS, S, M, L, XL, XXL',
+                'COLOR': 'Blanco, Negro, Azul Marino, Gris',
+                'MATERIAL': '100% Algodón',
+                'PESO': '180g/m²',
+                'MARCA': 'EcoTextil'
+            },
+            {
+                'PRODUCTO': 'Taza Cerámica Blanca',
+                'DESCRIPCION': 'Taza de cerámica blanca apta para lavavajillas',
+                'PRECIO': '6.50',
+                'CATEGORIA': 'Promocional',
+                'CAPACIDAD': '350ml',
+                'COLOR': 'Blanco',
+                'MATERIAL': 'Cerámica',
+                'DIMENSIONES': '9.5cm alto x 8cm diámetro',
+                'MARCA': 'CeramicPro'
+            }
+        ]
+        
+        df = pd.DataFrame(data)
+        df.to_excel(file_path, index=False)
+    
+    return FileResponse(
+        path=file_path,
+        filename="PLANTILLA_PRODUCTOS.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+@api_router.get("/download/plantilla-simple")  
+async def download_template_simple():
+    """Download simple Excel template"""
+    file_path = "/app/PLANTILLA_SIMPLE.xlsx"
+    
+    # Create the file if it doesn't exist
+    if not os.path.exists(file_path):
+        import pandas as pd
+        
+        data = [
+            {
+                'PRODUCTO': 'Ejemplo: Camiseta Básica',
+                'DESCRIPCION': 'Ejemplo: Camiseta 100% algodón manga corta',
+                'PRECIO': '12.50',
+                'CATEGORIA': 'Textil'
+            },
+            {
+                'PRODUCTO': 'Ejemplo: Taza Cerámica',
+                'DESCRIPCION': 'Ejemplo: Taza blanca personalizable 350ml',
+                'PRECIO': '8.00',
+                'CATEGORIA': 'Promocional'
+            }
+        ]
+        
+        df = pd.DataFrame(data)
+        df.to_excel(file_path, index=False)
+    
+    return FileResponse(
+        path=file_path,
+        filename="PLANTILLA_SIMPLE.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
 # Marking techniques routes
 @api_router.post("/marking-techniques", response_model=MarkingTechnique)
 async def create_marking_technique(
