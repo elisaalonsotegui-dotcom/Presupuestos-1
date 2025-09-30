@@ -507,13 +507,31 @@ async def upload_catalog(
         # Count products with valid prices for debugging
         products_with_prices = len([p for p in products if p.get('base_price', 0) > 0])
         
+        # Convert NumPy types to native Python types for JSON serialization
+        def convert_numpy_types(obj):
+            if hasattr(obj, 'dtype'):
+                return obj.item() if hasattr(obj, 'item') else str(obj)
+            return obj
+        
+        # Clean detected price columns for JSON serialization
+        cleaned_detected_cols = []
+        if 'detected_price_cols' in locals() and detected_price_cols:
+            for col_info in detected_price_cols:
+                cleaned_col_info = {
+                    'column': str(col_info['column']),
+                    'min': float(col_info['min']) if col_info['min'] is not None else 0.0,
+                    'max': float(col_info['max']) if col_info['max'] is not None else 0.0,
+                    'count': int(col_info['count']) if col_info['count'] is not None else 0
+                }
+                cleaned_detected_cols.append(cleaned_col_info)
+        
         return {
             "message": result_message,
             "count": len(products),
             "file_type": file_extension.upper(),
             "products_with_prices": products_with_prices,
-            "columns_found": available_columns,
-            "detected_price_columns": detected_price_cols if 'detected_price_cols' in locals() else [],
+            "columns_found": [str(col) for col in available_columns],
+            "detected_price_columns": cleaned_detected_cols,
             "columns_mapped": {
                 "reference": ref_col,
                 "name": name_col,
@@ -539,7 +557,7 @@ async def upload_catalog(
                 },
                 "image_url": image_url_col
             },
-            "errors": errors
+            "errors": [str(error) for error in errors]
         }
     
     except Exception as e:
