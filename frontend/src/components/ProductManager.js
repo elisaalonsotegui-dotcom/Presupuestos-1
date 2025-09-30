@@ -387,6 +387,22 @@ const ProductManager = () => {
                 <TableBody>
                   {products.map((product) => (
                     <TableRow key={product.id} data-testid="product-row">
+                      <TableCell className="w-16">
+                        {product.image_url ? (
+                          <img 
+                            src={product.image_url} 
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded-md border border-gray-200"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextElementSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center ${product.image_url ? 'hidden' : 'flex'}`}>
+                          <Package className="w-6 h-6 text-gray-400" />
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell className="max-w-xs">
                         <div className="space-y-1">
