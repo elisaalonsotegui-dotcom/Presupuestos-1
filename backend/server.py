@@ -213,9 +213,19 @@ async def upload_catalog(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        # Read Excel file
+        # Determine file type
+        file_extension = file.filename.lower().split('.')[-1]
+        
+        if file_extension not in ['xlsx', 'xls', 'csv']:
+            raise HTTPException(status_code=400, detail="Only Excel (.xlsx, .xls) and CSV files are allowed")
+        
+        # Read file based on type
         contents = await file.read()
-        df = pd.read_excel(BytesIO(contents))
+        
+        if file_extension == 'csv':
+            df = pd.read_csv(BytesIO(contents))
+        else:
+            df = pd.read_excel(BytesIO(contents))
         
         # Log available columns for debugging
         available_columns = list(df.columns)
