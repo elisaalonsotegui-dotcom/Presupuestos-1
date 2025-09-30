@@ -1108,27 +1108,215 @@ class ParsedRequest(BaseModel):
     posicion: Optional[str] = None  # pecho, espalda, etc.
     presupuesto_maximo: Optional[float] = None
 
+def parse_client_request(description: str, quantity: int) -> ParsedRequest:
+    """Parser semántico avanzado que convierte texto natural a JSON estructurado"""
+    import re
+    
+    description_lower = description.lower()
+    
+    # Diccionarios de sinónimos expandidos
+    categoria_synonyms = {
+        'gorra': ['gorra', 'gorras', 'cap', 'caps', 'trucker', 'snapback', '6 paneles', 'baseball', 'visera'],
+        'camiseta': ['camiseta', 'camisetas', 't-shirt', 'tshirt', 'playera', 'remera'],
+        'polo': ['polo', 'polos', 'piqué', 'pique'],
+        'sudadera': ['sudadera', 'sudaderas', 'hoodie', 'hoodies', 'capucha', 'jersey'],
+        'taza': ['taza', 'tazas', 'mug', 'mugs', 'jarron'],
+        'bolsa': ['bolsa', 'bolsas', 'bag', 'bags', 'tote', 'shopper'],
+        'chaleco': ['chaleco', 'chalecos', 'vest'],
+        'delantal': ['delantal', 'delantales', 'mandil']
+    }
+    
+    perfil_synonyms = {
+        'bajo': ['bajo', 'básico', 'barato', 'económico', 'standard'],
+        'medio': ['medio', 'intermedio', 'equilibrado', 'normal'],
+        'alto': ['alto', 'premium', 'calidad', 'superior', 'top']
+    }
+    
+    tecnica_synonyms = {
+        'bordado': ['bordado', 'bordados', 'embroidery', 'bordar'],
+        'serigrafia': ['serigrafía', 'serigrafia', 'screen', 'silk', 'impresión'],
+        'transfer': ['transfer', 'vinilo', 'termoadhesivo'],
+        'sublimacion': ['sublimación', 'sublimacion', 'subli'],
+        'dtf': ['dtf', 'direct to film'],
+        'laser': ['láser', 'laser', 'grabado']
+    }
+    
+    cobertura_synonyms = {
+        'lleno': ['lleno', 'relleno', 'full', 'completo', 'sólido'],
+        'hueco': ['hueco', 'outline', 'contorno', 'vacío', 'solo borde']
+    }
+    
+    posicion_synonyms = {
+        'pecho': ['pecho', 'frontal', 'delantero', 'front'],
+        'espalda': ['espalda', 'espaldar', 'trasero', 'back'],
+        'manga': ['manga', 'brazo', 'sleeve'],
+        'lateral': ['lateral', 'lado', 'side']
+    }
+    
+    # Detectar categoría
+    detected_categoria = None
+    for categoria, synonyms in categoria_synonyms.items():
+        if any(syn in description_lower for syn in synonyms):
+            detected_categoria = categoria
+            break
+    
+    # Detectar perfil de calidad
+    detected_perfil = None
+    for perfil, synonyms in perfil_synonyms.items():
+        if any(syn in description_lower for syn in synonyms):
+            detected_perfil = perfil
+            break
+    
+    # Detectar técnica de marcaje
+    detected_tecnica = None
+    for tecnica, synonyms in tecnica_synonyms.items():
+        if any(syn in description_lower for syn in synonyms):
+            detected_tecnica = tecnica
+            break
+    
+    # Detectar cobertura (para bordado)
+    detected_cobertura = None
+    for cobertura, synonyms in cobertura_synonyms.items():
+        if any(syn in description_lower for syn in synonyms):
+            detected_cobertura = cobertura
+            break
+    
+    # Detectar posición
+    detected_posicion = None
+    for posicion, synonyms in posicion_synonyms.items():
+        if any(syn in description_lower for syn in synonyms):
+            detected_posicion = posicion
+            break
+    
+    # Detectar dimensiones y calcular área
+    detected_area = None
+    detected_dimensiones = None
+    
+    # Patrones para detectar dimensiones: 7x7, 8x6, 10×8, etc.
+    dimension_patterns = [
+        r'(\d+)x(\d+)\s*cm',
+        r'(\d+)×(\d+)\s*cm', 
+        r'(\d+)\s*x\s*(\d+)',
+        r'(\d+)\s*×\s*(\d+)',
+        r'(\d+)\s*por\s*(\d+)',
+        r'área\s*de\s*(\d+)',
+        r'superficie\s*(\d+)'
+    ]
+    
+    for pattern in dimension_patterns:
+        match = re.search(pattern, description_lower)
+        if match:
+            if len(match.groups()) == 2:
+                width, height = int(match.group(1)), int(match.group(2))
+                detected_area = width * height
+                detected_dimensiones = f"{width}x{height}cm"
+            elif len(match.groups()) == 1:
+                detected_area = int(match.group(1))
+            break
+    
+    # Detectar presupuesto máximo
+    presupuesto_max = None
+    budget_patterns = [
+        r'hasta\s*(\d+)\s*€',
+        r'máximo\s*(\d+)\s*euros',
+        r'budget\s*(\d+)',
+        r'presupuesto\s*(\d+)'
+    ]
+    
+    for pattern in budget_patterns:
+        match = re.search(pattern, description_lower)
+        if match:
+            presupuesto_max = float(match.group(1))
+            break
+    
+    return ParsedRequest(
+        categoria=detected_categoria or "general",
+        cantidad=quantity,
+        perfil=detected_perfil,
+        tecnica=detected_tecnica,
+        area_cm2=detected_area,
+        cobertura=detected_cobertura,
+        dimensiones=detected_dimensiones,
+        posicion=detected_posicion,
+        presupuesto_maximo=presupuesto_max
+    )
+
+def calculate_product_score(product: dict, parsed: ParsedRequest) -> float:
+    """Motor de scoring para seleccionar los mejores productos"""
+    score = 0.0
+    
+    # Pesos para el scoring
+    w_precio = 0.3
+    w_perfil = 0.25
+    w_compatibilidad = 0.2
+    w_stock = 0.1
+    w_plazo = 0.1
+    w_sostenibilidad = 0.05
+    
+    # 1. Puntuación por precio (normalizada, mejor precio = mayor score)
+    precio_base = product.get('base_price', 999)
+    if precio_base > 0:
+        # Normalizar precio: productos más baratos obtienen mejor puntuación
+        precio_normalizado = max(0, 1 - (precio_base / 50))  # Asumiendo max 50€
+        score += w_precio * precio_normalizado
+    
+    # 2. Match de perfil de calidad
+    product_perfil = None
+    if 'characteristics' in product and product['characteristics']:
+        product_perfil = product['characteristics'].get('perfil_calidad', '').lower()
+    
+    if parsed.perfil and product_perfil:
+        if parsed.perfil.lower() == product_perfil:
+            score += w_perfil * 1.0
+        elif abs(['bajo', 'medio', 'alto'].index(parsed.perfil) - 
+                ['bajo', 'medio', 'alto'].index(product_perfil)) == 1:
+            score += w_perfil * 0.5
+    
+    # 3. Compatibilidad técnica
+    print_codes = product.get('characteristics', {}).get('impresion', {}).get('tecnica_grabacion', '')
+    if not print_codes:
+        print_codes = product.get('characteristics', {}).get('print_codes', '')
+    
+    if parsed.tecnica and print_codes:
+        if parsed.tecnica.lower() in print_codes.lower():
+            score += w_compatibilidad * 1.0
+        elif 'bordado' in parsed.tecnica and 'bordado' in print_codes.lower():
+            score += w_compatibilidad * 1.0
+    
+    # 4. Stock disponible
+    stock = product.get('characteristics', {}).get('stock_disponible', '')
+    if 'si' in stock.lower():
+        score += w_stock * 1.0
+    elif 'bajo' in stock.lower():
+        score += w_stock * 0.5
+    
+    # 5. Plazo de entrega (mejor plazo = mayor score)
+    plazo = product.get('characteristics', {}).get('plazo_entrega_dias', 30)
+    try:
+        plazo_num = int(plazo) if plazo else 30
+        plazo_score = max(0, 1 - (plazo_num / 30))  # Normalizar a 30 días max
+        score += w_plazo * plazo_score
+    except:
+        pass
+    
+    # 6. Sostenibilidad
+    sostenibilidad = product.get('characteristics', {}).get('sostenibilidad', '')
+    if sostenibilidad:
+        score += w_sostenibilidad * 1.0
+    
+    return score
+
 @api_router.post("/quotes/generate-smart", response_model=Quote)
 async def generate_smart_quote(
     quote_request: SmartQuoteRequest,
     current_user: User = Depends(get_current_user)
 ):
-    """Generate intelligent quotes based on natural language description"""
+    """Sistema inteligente de presupuestos con parser semántico y motor de scoring"""
     
-    # Extract keywords from product description to find matching products
-    description_lower = quote_request.product_description.lower()
-    keywords = []
+    # 1. PARSER SEMÁNTICO: Convertir texto natural a JSON estructurado
+    parsed = parse_client_request(quote_request.product_description, quote_request.quantity)
     
-    # Common product keywords mapping
-    product_keywords = {
-        'camiseta': ['camiseta', 'camisetas', 't-shirt', 'tshirt'],
-        'polo': ['polo', 'polos'],
-        'sudadera': ['sudadera', 'sudaderas', 'hoodie', 'hoodies'],
-        'gorra': ['gorra', 'gorras', 'cap', 'caps'],
-        'taza': ['taza', 'tazas', 'mug', 'mugs'],
-        'bolsa': ['bolsa', 'bolsas', 'bag', 'bags'],
-        'llavero': ['llavero', 'llaveros', 'keychain'],
-    }
+    logger.info(f"Parsed request: {parsed.dict()}")
     
     # Find matching product types
     detected_categories = []
