@@ -417,7 +417,8 @@ async def upload_excel(
                 "printing": {
                     "print_code": print_code_col,
                     "max_print_area": max_print_area_col
-                }
+                },
+                "image_url": image_url_col
             },
             "errors": errors
         }
