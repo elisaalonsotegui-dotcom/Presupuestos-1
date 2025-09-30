@@ -388,35 +388,88 @@ const ProductManager = () => {
                     <TableRow key={product.id} data-testid="product-row">
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell className="max-w-xs">
-                        <div className="truncate" title={product.description}>
-                          {product.description || 'Sin descripción'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-1">
-                          <Euro className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium">{product.base_price.toFixed(2)}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-1">
-                          <Tag className="w-4 h-4 text-gray-400" />
-                          <span>{product.category || 'Sin categoría'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-xs">
-                          {Object.keys(product.characteristics).length > 0 ? (
-                            <div className="text-xs text-gray-600">
-                              {Object.entries(product.characteristics).slice(0, 2).map(([key, value]) => (
-                                <div key={key}>{key}: {String(value)}</div>
-                              ))}
-                              {Object.keys(product.characteristics).length > 2 && (
-                                <div className="text-gray-400">+{Object.keys(product.characteristics).length - 2} más</div>
-                              )}
+                        <div className="space-y-1">
+                          <div className="truncate text-sm" title={product.description}>
+                            {product.description || 'Sin descripción'}
+                          </div>
+                          {product.characteristics?.referencia && (
+                            <div className="text-xs text-blue-600 font-mono">
+                              REF: {product.characteristics.referencia}
                             </div>
-                          ) : (
-                            <span className="text-gray-400 text-xs">Sin características</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-1">
+                            <Euro className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium">{product.base_price.toFixed(2)}</span>
+                          </div>
+                          {product.characteristics?.precios_volumen && (
+                            <div className="text-xs text-gray-500">
+                              {Object.entries(product.characteristics.precios_volumen)
+                                .filter(([_, price]) => price > 0)
+                                .slice(0, 2)
+                                .map(([qty, price]) => (
+                                  <div key={qty}>{qty}: €{price}</div>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-1">
+                            <Tag className="w-4 h-4 text-gray-400" />
+                            <span>{product.category || 'Sin categoría'}</span>
+                          </div>
+                          {product.characteristics?.subcategoria && (
+                            <div className="text-xs text-gray-500">
+                              {product.characteristics.subcategoria}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs text-xs">
+                          {/* Mostrar dimensiones si existen */}
+                          {(product.characteristics?.ancho || product.characteristics?.alto) && (
+                            <div className="text-gray-600 mb-1">
+                              📏 {product.characteristics?.ancho && `${product.characteristics.ancho}cm`}
+                              {product.characteristics?.ancho && product.characteristics?.alto && ' × '}
+                              {product.characteristics?.alto && `${product.characteristics.alto}cm`}
+                            </div>
+                          )}
+                          
+                          {/* Mostrar técnica de impresión */}
+                          {product.characteristics?.impresion?.tecnica_grabacion && (
+                            <div className="text-blue-600 mb-1">
+                              🎨 {product.characteristics.impresion.tecnica_grabacion}
+                            </div>
+                          )}
+                          
+                          {/* Mostrar área de impresión */}
+                          {product.characteristics?.impresion?.medida_maxima_grabacion && (
+                            <div className="text-green-600">
+                              📐 {product.characteristics.impresion.medida_maxima_grabacion}
+                            </div>
+                          )}
+                          
+                          {/* Fallback para productos sin características específicas */}
+                          {!product.characteristics?.ancho && !product.characteristics?.impresion?.tecnica_grabacion && (
+                            Object.keys(product.characteristics).length > 0 ? (
+                              <div className="text-gray-600">
+                                {Object.entries(product.characteristics).slice(0, 2).map(([key, value]) => {
+                                  if (key === 'precios_volumen' || key === 'impresion' || key === 'referencia' || key === 'subcategoria') return null;
+                                  return <div key={key}>{key}: {String(value)}</div>;
+                                }).filter(Boolean)}
+                                {Object.keys(product.characteristics).length > 4 && (
+                                  <div className="text-gray-400">+más datos...</div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Sin características</span>
+                            )
                           )}
                         </div>
                       </TableCell>
