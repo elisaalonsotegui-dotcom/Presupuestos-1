@@ -187,24 +187,51 @@ const MarkingTechniques = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {predefinedTechniques.map((technique, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{technique.name}</div>
-                    <div className="text-xs text-gray-500">€{technique.cost_per_unit}</div>
+            <div className="space-y-2">
+              <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                <p className="text-sm text-blue-700 font-medium mb-2">📄 Subir PDF de Tarifas</p>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePdfUpload}
+                  className="hidden"
+                  id="pdf-upload"
+                  data-testid="pdf-file-input"
+                />
+                <label htmlFor="pdf-upload" className="cursor-pointer">
+                  <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
+                    <FileText className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+                    <p className="text-sm text-blue-600">Haz clic para subir PDF de tarifas</p>
+                    <p className="text-xs text-blue-500">Se extraerán automáticamente las técnicas y precios</p>
                   </div>
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleAddPredefined(technique)}
-                    className="text-xs"
-                    data-testid={`add-predefined-${technique.name.toLowerCase().replace(' ', '-')}`}
-                  >
-                    Añadir
-                  </Button>
-                </div>
-              ))}
+                </label>
+                {uploadingPdf && (
+                  <div className="flex items-center justify-center py-2 mt-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-sm text-blue-600">Procesando PDF...</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="max-h-48 overflow-y-auto">
+                {predefinedTechniques.map((technique, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{technique.name}</div>
+                      <div className="text-xs text-gray-500">€{technique.cost_per_unit}</div>
+                    </div>
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleAddPredefined(technique)}
+                      className="text-xs"
+                      data-testid={`add-predefined-${technique.name.toLowerCase().replace(' ', '-')}`}
+                    >
+                      Añadir
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
