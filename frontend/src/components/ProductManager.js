@@ -246,7 +246,7 @@ const ProductManager = () => {
             {loading && (
               <div className="flex items-center justify-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
-                <span className="ml-2 text-sm text-gray-600">Procesando archivo...</span>
+                <span className="ml-2 text-sm text-gray-600">Procesando catálogo...</span>
               </div>
             )}
           </CardContent>
