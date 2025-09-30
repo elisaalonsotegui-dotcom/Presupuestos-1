@@ -214,33 +214,129 @@ async def upload_excel(
         contents = await file.read()
         df = pd.read_excel(BytesIO(contents))
         
+        # Log available columns for debugging
+        available_columns = list(df.columns)
+        logger.info(f"Excel columns found: {available_columns}")
+        
+        # Normalize column names to lowercase for matching
+        df.columns = df.columns.str.lower().str.strip()
+        
+        # Define column mappings (multiple possible names for each field)
+        column_mappings = {
+            'name': ['nombre', 'name', 'producto', 'articulo', 'item', 'descripción_corta', 'title'],
+            'description': ['descripcion', 'description', 'descripción', 'desc', 'detalle', 'detalles'],
+            'price': ['precio', 'price', 'coste', 'cost', 'valor', 'importe', 'pvp', 'tarifa'],
+            'category': ['categoria', 'category', 'categoría', 'tipo', 'clase', 'familia', 'grupo'],
+            'characteristics': ['caracteristicas', 'características', 'specs', 'specifications', 'propiedades', 'atributos']
+        }
+        
+        def find_column(field_mappings):
+            """Find the first matching column name for a field"""
+            for possible_name in field_mappings:
+                if possible_name in df.columns:
+                    return possible_name
+            return None
+        
+        # Find actual column names
+        name_col = find_column(column_mappings['name'])
+        desc_col = find_column(column_mappings['description'])
+        price_col = find_column(column_mappings['price'])
+        category_col = find_column(column_mappings['category'])
+        char_col = find_column(column_mappings['characteristics'])
+        
+        logger.info(f"Mapped columns - Name: {name_col}, Desc: {desc_col}, Price: {price_col}, Category: {category_col}, Chars: {char_col}")
+        
         products = []
-        for _, row in df.iterrows():
-            # Parse characteristics as JSON if it's a string
-            characteristics = {}
-            if 'caracteristicas' in row and pd.notna(row['caracteristicas']):
-                try:
-                    characteristics = json.loads(row['caracteristicas']) if isinstance(row['caracteristicas'], str) else row['caracteristicas']
-                except:
-                    characteristics = {"raw": str(row['caracteristicas'])}
-            
-            product = Product(
-                name=str(row.get('nombre', row.get('name', 'Sin nombre'))),
-                description=str(row.get('descripcion', row.get('description', ''))),
-                base_price=float(row.get('precio', row.get('price', 0))),
-                category=str(row.get('categoria', row.get('category', 'General'))),
-                characteristics=characteristics,
-                user_id=current_user.id
-            )
-            products.append(product.dict())
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                # Extract name
+                name = 'Sin nombre'
+                if name_col and pd.notna(row[name_col]):
+                    name = str(row[name_col]).strip()
+                
+                # Extract description  
+                description = ''
+                if desc_col and pd.notna(row[desc_col]):
+                    description = str(row[desc_col]).strip()
+                
+                # Extract price
+                price = 0.0
+                if price_col and pd.notna(row[price_col]):
+                    try:
+                        # Handle different price formats
+                        price_str = str(row[price_col]).replace(',', '.').replace('€', '').replace('$', '').strip()
+                        price = float(price_str)
+                    except (ValueError, TypeError):
+                        price = 0.0
+                
+                # Extract category
+                category = 'General'
+                if category_col and pd.notna(row[category_col]):
+                    category = str(row[category_col]).strip()
+                
+                # Extract characteristics
+                characteristics = {}
+                if char_col and pd.notna(row[char_col]):
+                    try:
+                        char_value = row[char_col]
+                        if isinstance(char_value, str):
+                            # Try to parse as JSON first
+                            try:
+                                characteristics = json.loads(char_value)
+                            except json.JSONDecodeError:
+                                # If not JSON, store as raw text
+                                characteristics = {"descripcion": char_value}
+                        else:
+                            characteristics = {"valor": str(char_value)}
+                    except:
+                        characteristics = {}
+                
+                # Create additional characteristics from other columns
+                for col in df.columns:
+                    if col not in [name_col, desc_col, price_col, category_col, char_col] and pd.notna(row[col]):
+                        characteristics[col] = str(row[col])
+                
+                product = Product(
+                    name=name,
+                    description=description,
+                    base_price=price,
+                    category=category,
+                    characteristics=characteristics,
+                    user_id=current_user.id
+                )
+                products.append(product.dict())
+                
+            except Exception as row_error:
+                errors.append(f"Row {index + 2}: {str(row_error)}")
         
         # Insert products
         if products:
             await db.products.insert_many(products)
         
-        return {"message": f"Successfully uploaded {len(products)} products", "count": len(products)}
+        result_message = f"Successfully uploaded {len(products)} products"
+        if errors:
+            result_message += f". {len(errors)} errors occurred: {'; '.join(errors[:3])}"
+            if len(errors) > 3:
+                result_message += f" and {len(errors) - 3} more errors."
+        
+        return {
+            "message": result_message,
+            "count": len(products),
+            "columns_found": available_columns,
+            "columns_mapped": {
+                "name": name_col,
+                "description": desc_col, 
+                "price": price_col,
+                "category": category_col,
+                "characteristics": char_col
+            },
+            "errors": errors
+        }
     
     except Exception as e:
+        logger.error(f"Excel processing error: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error processing Excel file: {str(e)}")
 
 @api_router.get("/products", response_model=List[Product])
