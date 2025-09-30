@@ -88,12 +88,15 @@ const MarkingTechniques = () => {
     }
   };
 
-  const handlePdfUpload = async (event) => {
+  const handleTariffUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.pdf')) {
-      toast.error('Por favor sube un archivo PDF');
+    const validExtensions = ['.pdf', '.csv'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (!validExtensions.includes(fileExtension)) {
+      toast.error('Por favor sube un archivo PDF o CSV');
       return;
     }
 
@@ -103,18 +106,18 @@ const MarkingTechniques = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/marking-techniques/upload-pdf`, formData, {
+      const response = await axios.post(`${API}/marking-techniques/upload-tariff`, formData, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
 
-      toast.success(`¡${response.data.count} técnicas de marcaje extraídas del PDF!`);
+      toast.success(`¡${response.data.count} técnicas extraídas del ${response.data.file_type}!`);
       fetchTechniques();
     } catch (error) {
-      console.error('Error uploading PDF:', error);
-      toast.error(error.response?.data?.detail || 'Error al procesar el PDF');
+      console.error('Error uploading tariff:', error);
+      toast.error(error.response?.data?.detail || 'Error al procesar el archivo');
     } finally {
       setUploadingPdf(false);
       event.target.value = '';
