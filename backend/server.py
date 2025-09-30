@@ -305,21 +305,28 @@ async def generate_quote(
     # Generate three tiers
     total_products = len(products)
     
+    # Clean products data to remove MongoDB ObjectIds
+    def clean_product(product):
+        cleaned = {k: v for k, v in product.items() if k != '_id'}
+        return cleaned
+    
     # Basic: cheapest 1/3
-    basic_products = products[:max(1, total_products // 3)]
+    basic_products = [clean_product(p) for p in products[:max(1, total_products // 3)]]
     basic_total = sum(p["base_price"] for p in basic_products) + marking_costs
     
     # Medium: middle 1/3
     medium_start = max(1, total_products // 3)
     medium_end = max(2, (2 * total_products) // 3)
-    medium_products = products[medium_start:medium_end] if medium_end > medium_start else products[:2]
+    medium_products_raw = products[medium_start:medium_end] if medium_end > medium_start else products[:2]
+    medium_products = [clean_product(p) for p in medium_products_raw]
     medium_total = sum(p["base_price"] for p in medium_products) + marking_costs * 1.5
     
     # Premium: most expensive 1/3
     premium_start = max(2, (2 * total_products) // 3)
-    premium_products = products[premium_start:]
-    if not premium_products:
-        premium_products = products[-2:]
+    premium_products_raw = products[premium_start:]
+    if not premium_products_raw:
+        premium_products_raw = products[-2:]
+    premium_products = [clean_product(p) for p in premium_products_raw]
     premium_total = sum(p["base_price"] for p in premium_products) + marking_costs * 2
     
     quote = Quote(
