@@ -195,6 +195,28 @@ const ProductManager = () => {
                 💡 El sistema detecta automáticamente las columnas de tu Excel
               </p>
             </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <p className="text-sm text-green-700 font-medium mb-3">📥 Descargar Plantillas Excel:</p>
+              <div className="space-y-2">
+                <a 
+                  href={`${BACKEND_URL}/api/download/plantilla-completa`}
+                  download
+                  className="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+                >
+                  📋 Descargar Plantilla Completa
+                </a>
+                <a 
+                  href={`${BACKEND_URL}/api/download/plantilla-simple`}
+                  download
+                  className="block w-full text-center px-4 py-2 bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition-colors text-sm"
+                >
+                  📄 Descargar Plantilla Simple
+                </a>
+              </div>
+              <p className="text-xs text-green-600 mt-2">
+                💡 Usa estas plantillas para estandarizar tus archivos de proveedores
+              </p>
+            </div>
             {loading && (
               <div className="flex items-center justify-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
