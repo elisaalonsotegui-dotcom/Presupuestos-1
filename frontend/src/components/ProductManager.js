@@ -39,16 +39,20 @@ const ProductManager = () => {
     fetchProducts();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (page = 1) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/products`, {
+      const response = await axios.get(`${API}/products?page=${page}&limit=50`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setProducts(response.data);
+      
+      setProducts(response.data.products || []);
+      setPagination(response.data.pagination || pagination);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Error al cargar productos');
+      setProducts([]);
     }
   };
 
