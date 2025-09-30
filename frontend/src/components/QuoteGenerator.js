@@ -311,18 +311,28 @@ const QuoteGenerator = () => {
                       <div key={tier} className="space-y-2">
                         <h5 className="text-sm font-medium text-gray-700 capitalize">{getTierLabel(tier)}</h5>
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs text-gray-600 mb-2">
+                          <p className="text-xs text-gray-600 mb-3">
                             {products.length} producto{products.length !== 1 ? 's' : ''} seleccionado{products.length !== 1 ? 's' : ''}
                           </p>
-                          <div className="space-y-1">
+                          <div className="space-y-2">
                             {products.slice(0, 3).map((product, index) => (
-                              <div key={index} className="flex justify-between text-xs">
-                                <span className="truncate mr-2">{product.name}</span>
-                                <span className="text-gray-600">€{product.base_price}</span>
+                              <div key={index} className="flex items-center space-x-2 text-xs">
+                                {product.image_url && (
+                                  <img 
+                                    src={product.image_url} 
+                                    alt={product.name}
+                                    className="w-8 h-8 object-cover rounded border"
+                                    onError={(e) => e.target.style.display = 'none'}
+                                  />
+                                )}
+                                <div className="flex-1 flex justify-between">
+                                  <span className="truncate mr-2">{product.name}</span>
+                                  <span className="text-gray-600 font-medium">€{product.base_price}</span>
+                                </div>
                               </div>
                             ))}
                             {products.length > 3 && (
-                              <p className="text-xs text-gray-500">+{products.length - 3} productos más...</p>
+                              <p className="text-xs text-gray-500 mt-2">+{products.length - 3} productos más...</p>
                             )}
                           </div>
                         </div>
