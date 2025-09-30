@@ -479,13 +479,27 @@ async def upload_catalog(
                 product = Product(
                     name=name,
                     description=description,
-                    base_price=base_price,
+                    base_price=float(base_price),
                     category=category,
                     characteristics=characteristics,
                     image_url=image_url,
                     user_id=current_user.id
                 )
-                products.append(product.dict())
+                
+                # Convert product to dict and ensure no NumPy types
+                product_dict = product.dict()
+                
+                # Clean characteristics to avoid NumPy serialization issues
+                if 'characteristics' in product_dict and product_dict['characteristics']:
+                    cleaned_characteristics = {}
+                    for key, value in product_dict['characteristics'].items():
+                        if hasattr(value, 'dtype'):  # NumPy type
+                            cleaned_characteristics[key] = value.item() if hasattr(value, 'item') else str(value)
+                        else:
+                            cleaned_characteristics[key] = value
+                    product_dict['characteristics'] = cleaned_characteristics
+                
+                products.append(product_dict)
                 
             except Exception as row_error:
                 error_msg = f"Row {index + 2}: {str(row_error)}"
