@@ -587,21 +587,28 @@ async def get_marking_techniques(current_user: User = Depends(get_current_user))
     techniques = await db.marking_techniques.find({"user_id": current_user.id}).to_list(length=None)
     return [MarkingTechnique(**technique) for technique in techniques]
 
-@api_router.post("/marking-techniques/upload-pdf")
-async def upload_marking_pdf(
+@api_router.post("/marking-techniques/upload-tariff")
+async def upload_marking_tariff(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ):
-    """Extract marking techniques and prices from PDF tariff"""
+    """Extract marking techniques and prices from PDF or CSV tariff file"""
     try:
-        if not file.filename.lower().endswith('.pdf'):
-            raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+        file_extension = file.filename.lower().split('.')[-1]
         
-        # Read PDF content
+        if file_extension not in ['pdf', 'csv']:
+            raise HTTPException(status_code=400, detail="Only PDF and CSV files are allowed")
+        
+        # Read file content
         contents = await file.read()
         
-        # Parse PDF and extract techniques
-        techniques = parse_marking_pdf(contents)
+        # Parse based on file type
+        if file_extension == 'pdf':
+            techniques = parse_marking_pdf(contents)
+        elif file_extension == 'csv':
+            techniques = parse_marking_csv(contents)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file format")
         
         # Insert techniques into database
         if techniques:
@@ -618,14 +625,15 @@ async def upload_marking_pdf(
             await db.marking_techniques.insert_many(technique_objects)
         
         return {
-            "message": f"Successfully extracted {len(techniques)} marking techniques from PDF",
+            "message": f"Successfully extracted {len(techniques)} marking techniques from {file_extension.upper()}",
             "count": len(techniques),
-            "techniques": techniques
+            "techniques": techniques[:10],  # Only show first 10 for response
+            "file_type": file_extension.upper()
         }
     
     except Exception as e:
-        logger.error(f"PDF processing error: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Error processing PDF: {str(e)}")
+        logger.error(f"Tariff file processing error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error processing {file_extension.upper()}: {str(e)}")
 
 def parse_marking_pdf(pdf_content: bytes) -> list:
     """Parse PDF content and extract marking techniques with prices"""
