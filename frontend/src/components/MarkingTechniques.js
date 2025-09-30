@@ -223,26 +223,27 @@ const MarkingTechniques = () => {
           <CardContent>
             <div className="space-y-2">
               <div className="bg-blue-50 p-3 rounded-lg mb-4">
-                <p className="text-sm text-blue-700 font-medium mb-2">📄 Subir PDF de Tarifas</p>
+                <p className="text-sm text-blue-700 font-medium mb-2">📄 Subir Archivo de Tarifas</p>
                 <input
                   type="file"
-                  accept=".pdf"
-                  onChange={handlePdfUpload}
+                  accept=".pdf,.csv"
+                  onChange={handleTariffUpload}
                   className="hidden"
-                  id="pdf-upload"
-                  data-testid="pdf-file-input"
+                  id="tariff-upload"
+                  data-testid="tariff-file-input"
                 />
-                <label htmlFor="pdf-upload" className="cursor-pointer">
+                <label htmlFor="tariff-upload" className="cursor-pointer">
                   <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
                     <FileText className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                    <p className="text-sm text-blue-600">Haz clic para subir PDF de tarifas</p>
+                    <p className="text-sm text-blue-600">Haz clic para subir PDF o CSV de tarifas</p>
                     <p className="text-xs text-blue-500">Se extraerán automáticamente las técnicas y precios</p>
+                    <p className="text-xs text-blue-400 mt-1">Formatos: .pdf, .csv</p>
                   </div>
                 </label>
                 {uploadingPdf && (
                   <div className="flex items-center justify-center py-2 mt-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-sm text-blue-600">Procesando PDF...</span>
+                    <span className="ml-2 text-sm text-blue-600">Procesando archivo...</span>
                   </div>
                 )}
               </div>
