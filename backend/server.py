@@ -315,7 +315,36 @@ async def upload_catalog(
         max_print_area_col = find_column(column_mappings['max_print_area'])
         image_url_col = find_column(column_mappings['image_url'])
         
-        logger.info(f"Mapped columns - Ref: {ref_col}, Name: {name_col}, Desc: {desc_col}, Category: {category_col}, Image: {image_url_col}")
+        # Enhanced price detection - look for any numeric column that might be price
+        detected_price_cols = []
+        if not any([price_500_minus_col, price_500_plus_col, price_2000_plus_col, price_5000_plus_col]):
+            logger.info("No volume price columns found, searching for any price column...")
+            for col in df.columns:
+                try:
+                    # Check if column contains numeric data that could be prices
+                    numeric_values = pd.to_numeric(df[col], errors='coerce')
+                    non_null_values = numeric_values.dropna()
+                    
+                    if len(non_null_values) > 0:
+                        min_val = non_null_values.min()
+                        max_val = non_null_values.max()
+                        
+                        # Reasonable price range (0.01 to 10000)
+                        if min_val >= 0 and max_val <= 10000 and min_val < max_val:
+                            detected_price_cols.append({
+                                'column': col,
+                                'min': min_val,
+                                'max': max_val,
+                                'count': len(non_null_values)
+                            })
+                except Exception:
+                    continue
+            
+            logger.info(f"Detected potential price columns: {detected_price_cols}")
+        
+        logger.info(f"Mapped columns - Ref: {ref_col}, Name: {name_col}, Desc: {desc_col}, Category: {category_col}")
+        logger.info(f"Price columns - 500-: {price_500_minus_col}, 500+: {price_500_plus_col}, 2000+: {price_2000_plus_col}, 5000+: {price_5000_plus_col}")
+        logger.info(f"Other - Print: {print_code_col}, Image: {image_url_col}")
         
         products = []
         errors = []
