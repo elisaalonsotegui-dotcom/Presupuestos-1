@@ -426,7 +426,11 @@ async def upload_catalog(
                 products.append(product.dict())
                 
             except Exception as row_error:
-                errors.append(f"Row {index + 2}: {str(row_error)}")
+                error_msg = f"Row {index + 2}: {str(row_error)}"
+                errors.append(error_msg)
+                logger.warning(error_msg)
+                # Continue processing other rows
+                continue
         
         # Insert products
         if products:
