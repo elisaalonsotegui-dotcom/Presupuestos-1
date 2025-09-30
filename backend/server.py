@@ -1318,6 +1318,184 @@ async def generate_smart_quote(
     
     logger.info(f"Parsed request: {parsed.dict()}")
     
+    # 2. BÚSQUEDA INTELIGENTE: Filtrar productos por categoría detectada
+    search_filter = {"user_id": current_user.id}
+    
+    if parsed.categoria and parsed.categoria != "general":
+        # Búsqueda por categoría detectada
+        search_filter["$or"] = [
+            {"category": {"$regex": parsed.categoria, "$options": "i"}},
+            {"name": {"$regex": parsed.categoria, "$options": "i"}},
+            {"description": {"$regex": parsed.categoria, "$options": "i"}}
+        ]
+    
+    # Filtrar por técnica compatible si se detectó
+    if parsed.tecnica:
+        search_filter["$and"] = search_filter.get("$and", [])
+        search_filter["$and"].append({
+            "$or": [
+                {"characteristics.impresion.tecnica_grabacion": {"$regex": parsed.tecnica, "$options": "i"}},
+                {"characteristics.print_codes": {"$regex": parsed.tecnica, "$options": "i"}}
+            ]
+        })
+    
+    # Obtener productos candidatos
+    products_cursor = await db.products.find(search_filter).limit(200).to_list(length=200)
+    
+    if not products_cursor:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"No se encontraron productos de tipo '{parsed.categoria}' compatibles con '{parsed.tecnica or 'las técnicas solicitadas'}'"
+        )
+    
+    # Convertir a objetos Product
+    products = []
+    for product_data in products_cursor:
+        try:
+            if '_id' in product_data:
+                del product_data['_id']
+            product = Product(**product_data)
+            products.append(product.dict())
+        except Exception as e:
+            logger.warning(f"Error processing product: {e}")
+            continue
+    
+    if not products:
+        raise HTTPException(status_code=404, detail="No se pudieron procesar los productos encontrados")
+    
+    # 3. MOTOR DE SCORING: Puntuar y ordenar productos
+    scored_products = []
+    for product in products:
+        score = calculate_product_score(product, parsed)
+        scored_products.append((product, score))
+    
+    # Ordenar por puntuación descendente
+    scored_products.sort(key=lambda x: x[1], reverse=True)
+    
+    # Tomar los mejores productos para cada tier
+    top_products = [item[0] for item in scored_products[:20]]  # Top 20 productos
+    
+    logger.info(f"Top 3 products scores: {[(p['name'], s) for p, s in scored_products[:3]]}")
+    
+    # 4. CÁLCULO DE MARCAJE INTELIGENTE
+    marking_cost_per_unit = 0.0
+    marking_description = ""
+    
+    # Calcular coste de bordado por cm² si se detectó
+    if parsed.tecnica == "bordado" and parsed.area_cm2:
+        # Buscar técnicas de bordado en BD
+        bordado_techniques = await db.marking_techniques.find({
+            "user_id": current_user.id,
+            "name": {"$regex": "bordado", "$options": "i"}
+        }).to_list(length=None)
+        
+        if bordado_techniques:
+            # Usar la técnica de bordado más apropiada
+            bordado_base_price = bordado_techniques[0]["cost_per_unit"]
+            
+            # Factores de coste por cobertura
+            cobertura_multiplier = 1.0
+            if parsed.cobertura == "lleno":
+                cobertura_multiplier = 1.2  # Bordado lleno cuesta más
+            elif parsed.cobertura == "hueco":
+                cobertura_multiplier = 0.8  # Bordado hueco cuesta menos
+            
+            # Factores por área (áreas grandes tienen descuento por cm²)
+            area_multiplier = 1.0
+            if parsed.area_cm2 <= 15:  # Áreas pequeñas
+                area_multiplier = 1.3
+            elif parsed.area_cm2 <= 35:  # Áreas medianas
+                area_multiplier = 1.1
+            elif parsed.area_cm2 >= 50:  # Áreas grandes
+                area_multiplier = 0.9
+            
+            marking_cost_per_unit = bordado_base_price * parsed.area_cm2 * cobertura_multiplier * area_multiplier
+            marking_description = f"Bordado {parsed.cobertura or 'estándar'} {parsed.dimensiones or f'{parsed.area_cm2}cm²'}"
+            
+        logger.info(f"Bordado calculado: {parsed.area_cm2}cm² x €{bordado_base_price} x {cobertura_multiplier} x {area_multiplier} = €{marking_cost_per_unit}")
+    
+    # Buscar otras técnicas si no es bordado
+    elif parsed.tecnica and quote_request.marking_techniques:
+        techniques = await db.marking_techniques.find({
+            "user_id": current_user.id,
+            "name": {"$in": quote_request.marking_techniques}
+        }).to_list(length=None)
+        marking_cost_per_unit = sum(t["cost_per_unit"] for t in techniques)
+        marking_description = ", ".join(quote_request.marking_techniques)
+    
+    # 5. GENERACIÓN DE TRES NIVELES INTELIGENTES
+    quantity = parsed.cantidad
+    
+    # Dividir productos en tres tiers basados en scoring
+    tier_size = max(1, len(top_products) // 3)
+    
+    # TIER BÁSICO: Mejor precio (productos con mejor puntuación de precio)
+    basic_products = top_products[:tier_size]
+    basic_avg_price = sum(p["base_price"] for p in basic_products) / len(basic_products) if basic_products else 0
+    basic_marking_cost = marking_cost_per_unit * 0.9  # Descuento en marcaje básico
+    basic_total_unit = basic_avg_price + basic_marking_cost
+    basic_total = basic_total_unit * quantity
+    
+    # TIER MEDIO: Equilibrado (productos del medio)
+    medium_start = tier_size
+    medium_end = tier_size * 2
+    medium_products = top_products[medium_start:medium_end] if medium_end <= len(top_products) else top_products[medium_start:]
+    if not medium_products:
+        medium_products = basic_products
+    medium_avg_price = sum(p["base_price"] for p in medium_products) / len(medium_products) if medium_products else basic_avg_price * 1.3
+    medium_marking_cost = marking_cost_per_unit
+    medium_total_unit = medium_avg_price + medium_marking_cost
+    medium_total = medium_total_unit * quantity
+    
+    # TIER PREMIUM: Mejor calidad (productos con mejor puntuación general)
+    premium_products = top_products[-tier_size:] if len(top_products) >= tier_size * 2 else top_products[:3]
+    premium_avg_price = sum(p["base_price"] for p in premium_products) / len(premium_products) if premium_products else medium_avg_price * 1.4
+    premium_marking_cost = marking_cost_per_unit * 1.2  # Marcaje premium con mejor calidad
+    premium_total_unit = premium_avg_price + premium_marking_cost
+    premium_total = premium_total_unit * quantity
+    
+    # 6. CREAR PRESUPUESTO ESTRUCTURADO
+    quote = Quote(
+        client_name=quote_request.client_name,
+        products=[{
+            "request": quote_request.product_description,
+            "parsed": parsed.dict(),
+            "quantity": quantity,
+            "marking_description": marking_description,
+            "basic": {
+                "products": basic_products[:3],  # Mostrar top 3
+                "avg_unit_price": round(basic_avg_price, 2),
+                "marking_cost_per_unit": round(basic_marking_cost, 2),
+                "total_unit_price": round(basic_total_unit, 2),
+                "description": "Opción económica con buena calidad"
+            },
+            "medium": {
+                "products": medium_products[:3],
+                "avg_unit_price": round(medium_avg_price, 2),
+                "marking_cost_per_unit": round(medium_marking_cost, 2),
+                "total_unit_price": round(medium_total_unit, 2),
+                "description": "Equilibrio perfecto calidad-precio"
+            },
+            "premium": {
+                "products": premium_products[:3],
+                "avg_unit_price": round(premium_avg_price, 2),
+                "marking_cost_per_unit": round(premium_marking_cost, 2),
+                "total_unit_price": round(premium_total_unit, 2),
+                "description": "Máxima calidad y prestaciones"
+            }
+        }],
+        total_basic=round(basic_total, 2),
+        total_medium=round(medium_total, 2),
+        total_premium=round(premium_total, 2),
+        marking_techniques=quote_request.marking_techniques,
+        user_id=current_user.id
+    )
+    
+    # Guardar en BD
+    await db.quotes.insert_one(quote.dict())
+    
+    return quote
+    
     # Find matching product types
     detected_categories = []
     for product_type, synonyms in product_keywords.items():
