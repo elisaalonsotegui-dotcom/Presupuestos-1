@@ -392,9 +392,21 @@ async def upload_catalog(
                 def extract_price(col, row):
                     if col and pd.notna(row[col]):
                         try:
-                            price_str = str(row[col]).replace(',', '.').replace('€', '').replace('$', '').strip()
+                            # Handle different decimal separators and currency symbols
+                            price_str = str(row[col]).replace('€', '').replace('$', '').replace('£', '')
+                            price_str = price_str.replace(' ', '').strip()
+                            
+                            # Handle European decimal format (comma as decimal separator)
+                            if ',' in price_str and '.' in price_str:
+                                # Format like 1.234,56 (European style with thousands separator)
+                                price_str = price_str.replace('.', '').replace(',', '.')
+                            elif ',' in price_str and price_str.count(',') == 1:
+                                # Simple comma as decimal separator
+                                price_str = price_str.replace(',', '.')
+                            
                             return float(price_str)
-                        except (ValueError, TypeError):
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"Could not parse price '{row[col]}' in column '{col}': {e}")
                             return 0.0
                     return 0.0
                 
@@ -406,6 +418,19 @@ async def upload_catalog(
                 # Use the most common price as base price
                 prices = [p for p in volume_pricing.values() if p > 0]
                 base_price = prices[0] if prices else 0.0
+                
+                # If no volume pricing found, try to use detected price columns
+                if base_price == 0.0 and detected_price_cols:
+                    for price_col_info in detected_price_cols:
+                        col = price_col_info['column']
+                        if col in row and pd.notna(row[col]):
+                            base_price = extract_price(col, row)
+                            if base_price > 0:
+                                # Also populate volume pricing with this single price
+                                volume_pricing['precio_base'] = base_price
+                                break
+                
+                logger.debug(f"Row {index}: Base price={base_price}, Volume pricing={volume_pricing}")
                 
                 # Extract printing information
                 printing_info = {}
