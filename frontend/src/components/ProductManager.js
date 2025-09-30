@@ -25,6 +25,15 @@ const ProductManager = () => {
     characteristics: {}
   });
   const [deletingProduct, setDeletingProduct] = useState(null);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_pages: 1,
+    total_count: 0,
+    limit: 50,
+    has_next: false,
+    has_prev: false
+  });
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchProducts();
