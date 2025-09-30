@@ -207,8 +207,8 @@ async def get_me(current_user: User = Depends(get_current_user)):
     return UserResponse(**current_user.dict())
 
 # Product routes
-@api_router.post("/products/upload-excel")
-async def upload_excel(
+@api_router.post("/products/upload-catalog")
+async def upload_catalog(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ):
