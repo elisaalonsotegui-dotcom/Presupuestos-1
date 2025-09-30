@@ -161,7 +161,7 @@ const ProductManager = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Upload className="w-5 h-5 text-emerald-600" />
-              <span>Subir Excel</span>
+              <span>Subir Catálogo</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
