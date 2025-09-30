@@ -267,8 +267,9 @@ async def upload_excel(
         price_5000_plus_col = find_column(column_mappings['price_5000_plus'])
         print_code_col = find_column(column_mappings['print_code'])
         max_print_area_col = find_column(column_mappings['max_print_area'])
+        image_url_col = find_column(column_mappings['image_url'])
         
-        logger.info(f"Mapped columns - Ref: {ref_col}, Name: {name_col}, Desc: {desc_col}, Category: {category_col}")
+        logger.info(f"Mapped columns - Ref: {ref_col}, Name: {name_col}, Desc: {desc_col}, Category: {category_col}, Image: {image_url_col}")
         
         products = []
         errors = []
