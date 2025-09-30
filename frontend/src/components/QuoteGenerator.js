@@ -345,41 +345,75 @@ const QuoteGenerator = () => {
                   </div>
                 )}
 
-                {/* Product Details */}
+                {/* Smart Quote Details */}
                 {generatedQuote.products && generatedQuote.products[0] && (
                   <div className="space-y-4">
-                    <h4 className="font-medium">Productos por nivel:</h4>
-                    {Object.entries(generatedQuote.products[0]).map(([tier, products]) => (
-                      <div key={tier} className="space-y-2">
-                        <h5 className="text-sm font-medium text-gray-700 capitalize">{getTierLabel(tier)}</h5>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs text-gray-600 mb-3">
-                            {products.length} producto{products.length !== 1 ? 's' : ''} seleccionado{products.length !== 1 ? 's' : ''}
-                          </p>
-                          <div className="space-y-2">
-                            {products.slice(0, 3).map((product, index) => (
-                              <div key={index} className="flex items-center space-x-2 text-xs">
-                                {product.image_url && (
-                                  <img 
-                                    src={product.image_url} 
-                                    alt={product.name}
-                                    className="w-8 h-8 object-cover rounded border"
-                                    onError={(e) => e.target.style.display = 'none'}
-                                  />
-                                )}
-                                <div className="flex-1 flex justify-between">
-                                  <span className="truncate mr-2">{product.name}</span>
-                                  <span className="text-gray-600 font-medium">€{product.base_price}</span>
-                                </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm font-medium text-gray-700 mb-1">Solicitud del cliente:</p>
+                      <p className="text-sm text-gray-600">"{generatedQuote.products[0].request}"</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Cantidad: {generatedQuote.products[0].quantity} unidades
+                        {generatedQuote.products[0].marking && ` | Marcaje: ${generatedQuote.products[0].marking}`}
+                      </p>
+                    </div>
+                    
+                    <h4 className="font-medium">Propuestas por nivel de calidad:</h4>
+                    
+                    {['basic', 'medium', 'premium'].map((tier) => {
+                      const tierData = generatedQuote.products[0][tier];
+                      if (!tierData) return null;
+                      
+                      return (
+                        <div key={tier} className={`border rounded-lg p-4 ${getTierColor(tier)}`}>
+                          <div className="flex justify-between items-start mb-3">
+                            <h5 className="font-medium">{getTierLabel(tier)}</h5>
+                            <div className="text-right">
+                              <div className="text-lg font-bold">
+                                €{tierData.total_unit} / unidad
                               </div>
-                            ))}
-                            {products.length > 3 && (
-                              <p className="text-xs text-gray-500 mt-2">+{products.length - 3} productos más...</p>
-                            )}
+                              <div className="text-sm text-gray-600">
+                                Total: €{tier === 'basic' ? generatedQuote.total_basic : 
+                                        tier === 'medium' ? generatedQuote.total_medium : 
+                                        generatedQuote.total_premium}
+                              </div>
+                            </div>
                           </div>
+                          
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <span className="text-gray-600">Producto:</span>
+                              <span className="font-medium ml-1">€{tierData.unit_price}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Marcaje:</span>
+                              <span className="font-medium ml-1">€{tierData.marking_cost}</span>
+                            </div>
+                          </div>
+                          
+                          {tierData.products && tierData.products.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <p className="text-xs font-medium text-gray-700 mb-1">Productos incluidos:</p>
+                              {tierData.products.slice(0, 2).map((product, index) => (
+                                <div key={index} className="flex items-center space-x-2 text-xs">
+                                  {product.image_url && (
+                                    <img 
+                                      src={product.image_url} 
+                                      alt={product.name}
+                                      className="w-6 h-6 object-cover rounded border"
+                                      onError={(e) => e.target.style.display = 'none'}
+                                    />
+                                  )}
+                                  <span className="truncate">{product.name}</span>
+                                </div>
+                              ))}
+                              {tierData.products.length > 2 && (
+                                <p className="text-xs text-gray-500 mt-1">+{tierData.products.length - 2} productos más</p>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
