@@ -1143,10 +1143,23 @@ async def generate_smart_quote(
         ]
     
     # Get products with pagination to avoid performance issues
-    products = await db.products.find(search_filter).limit(100).to_list(length=100)
+    products_cursor = await db.products.find(search_filter).limit(100).to_list(length=100)
     
-    if not products:
+    if not products_cursor:
         raise HTTPException(status_code=404, detail="No se encontraron productos que coincidan con la descripción")
+    
+    # Convert to Product objects to handle ObjectId serialization
+    products = []
+    for product_data in products_cursor:
+        try:
+            # Remove ObjectId before creating Product
+            if '_id' in product_data:
+                del product_data['_id']
+            product = Product(**product_data)
+            products.append(product.dict())
+        except Exception as e:
+            logger.warning(f"Error processing product: {e}")
+            continue
     
     # Sort products by price for tiered quotes
     products.sort(key=lambda x: x["base_price"])
