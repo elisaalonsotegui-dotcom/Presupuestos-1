@@ -224,13 +224,23 @@ async def upload_excel(
         # Normalize column names to lowercase for matching
         df.columns = df.columns.str.lower().str.strip()
         
-        # Define column mappings (multiple possible names for each field)
+        # Define column mappings for provider Excel format
         column_mappings = {
-            'name': ['nombre', 'name', 'producto', 'articulo', 'item', 'descripción_corta', 'title'],
-            'description': ['descripcion', 'description', 'descripción', 'desc', 'detalle', 'detalles'],
-            'price': ['precio', 'price', 'coste', 'cost', 'valor', 'importe', 'pvp', 'tarifa'],
-            'category': ['categoria', 'category', 'categoría', 'tipo', 'clase', 'familia', 'grupo'],
-            'characteristics': ['caracteristicas', 'características', 'specs', 'specifications', 'propiedades', 'atributos']
+            'reference': ['ref', 'referencia', 'codigo', 'code', 'ref.', 'reference'],
+            'name': ['articulo', 'artículo', 'nombre', 'name', 'producto', 'item'],
+            'description': ['descripcion', 'descripción', 'desc', 'detalle', 'description'],
+            'category': ['categoria', 'categoría', 'category', 'familia', 'tipo'],
+            'subcategory': ['subcategoria', 'subcategoría', 'subcategory', 'subtipo'],
+            'depth': ['profundidad', 'profundidas', 'depth', 'fondo'],
+            'weight': ['peso', 'weight', 'gr', 'gramos'],
+            'width': ['ancho', 'width', 'anchura'],
+            'height': ['alto', 'height', 'altura'],
+            'price_500_minus': ['-500', 'menos_500', 'price_500_minus', '<500'],
+            'price_500_plus': ['+500', 'mas_500', 'price_500_plus', '500+', '>500'],
+            'price_2000_plus': ['+2000', 'mas_2000', 'price_2000_plus', '2000+', '>2000'],
+            'price_5000_plus': ['+5000', 'mas_5000', 'price_5000_plus', '5000+', '>5000'],
+            'print_code': ['print_code', 'print code', 'max.colores', 'técnica de grabación', 'tecnica_grabacion', 'colores'],
+            'max_print_area': ['medida_máxima_de_grabación', 'medida maxima grabacion', 'max_print_area', 'area_impresion']
         }
         
         def find_column(field_mappings):
