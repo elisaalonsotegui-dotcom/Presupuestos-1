@@ -589,10 +589,35 @@ async def upload_catalog(
         file_type = file_extension.upper() if 'file_extension' in locals() else 'archivo'
         raise HTTPException(status_code=400, detail=f"Error procesando {file_type}: {error_detail}")
 
-@api_router.get("/products", response_model=List[Product])
-async def get_products(current_user: User = Depends(get_current_user)):
-    products = await db.products.find({"user_id": current_user.id}).to_list(length=None)
-    return [Product(**product) for product in products]
+@api_router.get("/products")
+async def get_products(
+    page: int = 1,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user)
+):
+    # Calculate skip value for pagination
+    skip = (page - 1) * limit
+    
+    # Get total count
+    total_count = await db.products.count_documents({"user_id": current_user.id})
+    
+    # Get paginated products
+    products = await db.products.find({"user_id": current_user.id}).skip(skip).limit(limit).to_list(length=limit)
+    
+    # Calculate pagination info
+    total_pages = (total_count + limit - 1) // limit
+    
+    return {
+        "products": [Product(**product) for product in products],
+        "pagination": {
+            "current_page": page,
+            "total_pages": total_pages,
+            "total_count": total_count,
+            "limit": limit,
+            "has_next": page < total_pages,
+            "has_prev": page > 1
+        }
+    }
 
 @api_router.post("/products", response_model=Product)
 async def create_product(
