@@ -105,6 +105,43 @@ const ProductManager = () => {
     }
   };
 
+  const handleDeleteProduct = async (productId, productName) => {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar "${productName}"?`)) {
+      setDeletingProduct(productId);
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`${API}/products/${productId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        toast.success('Producto eliminado exitosamente');
+        fetchProducts();
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        toast.error('Error al eliminar producto');
+      } finally {
+        setDeletingProduct(null);
+      }
+    }
+  };
+
+  const handleDeleteAllProducts = async () => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar TODOS los productos? Esta acción no se puede deshacer.')) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`${API}/products`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        toast.success('Todos los productos han sido eliminados');
+        fetchProducts();
+      } catch (error) {
+        console.error('Error deleting all products:', error);
+        toast.error('Error al eliminar productos');
+      }
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
