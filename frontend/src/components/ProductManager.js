@@ -293,6 +293,18 @@ const ProductManager = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            
+            {products.length > 0 && (
+              <Button 
+                onClick={handleDeleteAllProducts}
+                variant="outline"
+                className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                data-testid="delete-all-products-button"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Eliminar Todos
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
