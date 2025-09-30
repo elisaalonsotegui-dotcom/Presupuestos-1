@@ -68,7 +68,18 @@ const ProductManager = () => {
         }
       });
 
-      toast.success(`¡${response.data.count} productos subidos desde ${response.data.file_type}!`);
+      const message = `¡${response.data.count} productos subidos desde ${response.data.file_type}!`;
+      const priceInfo = response.data.products_with_prices !== undefined 
+        ? ` ${response.data.products_with_prices} productos tienen precios válidos.` 
+        : '';
+      
+      toast.success(message + priceInfo);
+      
+      // Log debugging info
+      if (response.data.detected_price_columns && response.data.detected_price_columns.length > 0) {
+        console.log('Columnas de precio detectadas:', response.data.detected_price_columns);
+      }
+      
       fetchProducts();
     } catch (error) {
       console.error('Error uploading catalog:', error);
