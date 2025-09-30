@@ -396,7 +396,7 @@ async def upload_catalog(
         if products:
             await db.products.insert_many(products)
         
-        result_message = f"Successfully uploaded {len(products)} products"
+        result_message = f"Successfully uploaded {len(products)} products from {file_extension.upper()}"
         if errors:
             result_message += f". {len(errors)} errors occurred: {'; '.join(errors[:3])}"
             if len(errors) > 3:
@@ -405,6 +405,7 @@ async def upload_catalog(
         return {
             "message": result_message,
             "count": len(products),
+            "file_type": file_extension.upper(),
             "columns_found": available_columns,
             "columns_mapped": {
                 "reference": ref_col,
