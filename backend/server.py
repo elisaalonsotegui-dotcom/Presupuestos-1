@@ -520,7 +520,8 @@ async def upload_catalog(
                 "description": desc_col,
                 "category": category_col,
                 "subcategory": subcategory_col,
-                "volume_prices": {
+                "prices": {
+                    "base_price": price_base_col,
                     "menos_500": price_500_minus_col,
                     "mas_500": price_500_plus_col,
                     "mas_2000": price_2000_plus_col,
