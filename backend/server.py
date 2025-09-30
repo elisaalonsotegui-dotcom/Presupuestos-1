@@ -384,11 +384,27 @@ async def upload_excel(
             "count": len(products),
             "columns_found": available_columns,
             "columns_mapped": {
+                "reference": ref_col,
                 "name": name_col,
-                "description": desc_col, 
-                "price": price_col,
+                "description": desc_col,
                 "category": category_col,
-                "characteristics": char_col
+                "subcategory": subcategory_col,
+                "volume_prices": {
+                    "menos_500": price_500_minus_col,
+                    "mas_500": price_500_plus_col,
+                    "mas_2000": price_2000_plus_col,
+                    "mas_5000": price_5000_plus_col
+                },
+                "dimensions": {
+                    "depth": depth_col,
+                    "weight": weight_col,
+                    "width": width_col,
+                    "height": height_col
+                },
+                "printing": {
+                    "print_code": print_code_col,
+                    "max_print_area": max_print_area_col
+                }
             },
             "errors": errors
         }
