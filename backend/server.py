@@ -251,19 +251,34 @@ async def upload_excel(
             return None
         
         # Find actual column names
+        ref_col = find_column(column_mappings['reference'])
         name_col = find_column(column_mappings['name'])
         desc_col = find_column(column_mappings['description'])
-        price_col = find_column(column_mappings['price'])
         category_col = find_column(column_mappings['category'])
-        char_col = find_column(column_mappings['characteristics'])
+        subcategory_col = find_column(column_mappings['subcategory'])
+        depth_col = find_column(column_mappings['depth'])
+        weight_col = find_column(column_mappings['weight'])
+        width_col = find_column(column_mappings['width'])
+        height_col = find_column(column_mappings['height'])
+        price_500_minus_col = find_column(column_mappings['price_500_minus'])
+        price_500_plus_col = find_column(column_mappings['price_500_plus'])
+        price_2000_plus_col = find_column(column_mappings['price_2000_plus'])
+        price_5000_plus_col = find_column(column_mappings['price_5000_plus'])
+        print_code_col = find_column(column_mappings['print_code'])
+        max_print_area_col = find_column(column_mappings['max_print_area'])
         
-        logger.info(f"Mapped columns - Name: {name_col}, Desc: {desc_col}, Price: {price_col}, Category: {category_col}, Chars: {char_col}")
+        logger.info(f"Mapped columns - Ref: {ref_col}, Name: {name_col}, Desc: {desc_col}, Category: {category_col}")
         
         products = []
         errors = []
         
         for index, row in df.iterrows():
             try:
+                # Extract reference
+                reference = ''
+                if ref_col and pd.notna(row[ref_col]):
+                    reference = str(row[ref_col]).strip()
+                
                 # Extract name
                 name = 'Sin nombre'
                 if name_col and pd.notna(row[name_col]):
@@ -274,41 +289,71 @@ async def upload_excel(
                 if desc_col and pd.notna(row[desc_col]):
                     description = str(row[desc_col]).strip()
                 
-                # Extract price
-                price = 0.0
-                if price_col and pd.notna(row[price_col]):
-                    try:
-                        # Handle different price formats
-                        price_str = str(row[price_col]).replace(',', '.').replace('€', '').replace('$', '').strip()
-                        price = float(price_str)
-                    except (ValueError, TypeError):
-                        price = 0.0
-                
                 # Extract category
                 category = 'General'
                 if category_col and pd.notna(row[category_col]):
                     category = str(row[category_col]).strip()
                 
-                # Extract characteristics
-                characteristics = {}
-                if char_col and pd.notna(row[char_col]):
-                    try:
-                        char_value = row[char_col]
-                        if isinstance(char_value, str):
-                            # Try to parse as JSON first
-                            try:
-                                characteristics = json.loads(char_value)
-                            except json.JSONDecodeError:
-                                # If not JSON, store as raw text
-                                characteristics = {"descripcion": char_value}
-                        else:
-                            characteristics = {"valor": str(char_value)}
-                    except:
-                        characteristics = {}
+                # Extract subcategory
+                subcategory = ''
+                if subcategory_col and pd.notna(row[subcategory_col]):
+                    subcategory = str(row[subcategory_col]).strip()
                 
-                # Create additional characteristics from other columns
+                # Extract dimensions and weight
+                dimensions = {}
+                if depth_col and pd.notna(row[depth_col]):
+                    dimensions['profundidad'] = str(row[depth_col])
+                if weight_col and pd.notna(row[weight_col]):
+                    dimensions['peso'] = str(row[weight_col])
+                if width_col and pd.notna(row[width_col]):
+                    dimensions['ancho'] = str(row[width_col])
+                if height_col and pd.notna(row[height_col]):
+                    dimensions['alto'] = str(row[height_col])
+                
+                # Extract volume pricing
+                volume_pricing = {}
+                def extract_price(col, row):
+                    if col and pd.notna(row[col]):
+                        try:
+                            price_str = str(row[col]).replace(',', '.').replace('€', '').replace('$', '').strip()
+                            return float(price_str)
+                        except (ValueError, TypeError):
+                            return 0.0
+                    return 0.0
+                
+                volume_pricing['menos_500'] = extract_price(price_500_minus_col, row)
+                volume_pricing['mas_500'] = extract_price(price_500_plus_col, row)
+                volume_pricing['mas_2000'] = extract_price(price_2000_plus_col, row)
+                volume_pricing['mas_5000'] = extract_price(price_5000_plus_col, row)
+                
+                # Use the most common price as base price
+                prices = [p for p in volume_pricing.values() if p > 0]
+                base_price = prices[0] if prices else 0.0
+                
+                # Extract printing information
+                printing_info = {}
+                if print_code_col and pd.notna(row[print_code_col]):
+                    printing_info['tecnica_grabacion'] = str(row[print_code_col])
+                if max_print_area_col and pd.notna(row[max_print_area_col]):
+                    printing_info['medida_maxima_grabacion'] = str(row[max_print_area_col])
+                
+                # Build comprehensive characteristics
+                characteristics = {
+                    'referencia': reference,
+                    'subcategoria': subcategory,
+                    **dimensions,
+                    'precios_volumen': volume_pricing,
+                    'impresion': printing_info
+                }
+                
+                # Add any additional columns not mapped
+                mapped_cols = [ref_col, name_col, desc_col, category_col, subcategory_col, 
+                             depth_col, weight_col, width_col, height_col,
+                             price_500_minus_col, price_500_plus_col, price_2000_plus_col, price_5000_plus_col,
+                             print_code_col, max_print_area_col]
+                
                 for col in df.columns:
-                    if col not in [name_col, desc_col, price_col, category_col, char_col] and pd.notna(row[col]):
+                    if col not in mapped_cols and pd.notna(row[col]):
                         characteristics[col] = str(row[col])
                 
                 product = Product(
