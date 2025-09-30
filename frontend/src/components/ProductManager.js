@@ -548,6 +548,38 @@ const ProductManager = () => {
               </Table>
             </div>
           )}
+          
+          {/* Pagination Controls */}
+          {pagination.total_count > 0 && (
+            <div className="flex items-center justify-between mt-6 px-2">
+              <div className="text-sm text-gray-600">
+                Mostrando {((currentPage - 1) * pagination.limit) + 1} - {Math.min(currentPage * pagination.limit, pagination.total_count)} de {pagination.total_count} productos
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchProducts(currentPage - 1)}
+                  disabled={!pagination.has_prev}
+                  data-testid="prev-page-button"
+                >
+                  Anterior
+                </Button>
+                <span className="text-sm text-gray-600">
+                  Página {currentPage} de {pagination.total_pages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchProducts(currentPage + 1)}
+                  disabled={!pagination.has_next}
+                  data-testid="next-page-button"
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
