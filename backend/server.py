@@ -496,11 +496,16 @@ async def upload_catalog(
             if len(errors) > 3:
                 result_message += f" and {len(errors) - 3} more errors."
         
+        # Count products with valid prices for debugging
+        products_with_prices = len([p for p in products if p.get('base_price', 0) > 0])
+        
         return {
             "message": result_message,
             "count": len(products),
             "file_type": file_extension.upper(),
+            "products_with_prices": products_with_prices,
             "columns_found": available_columns,
+            "detected_price_columns": detected_price_cols if 'detected_price_cols' in locals() else [],
             "columns_mapped": {
                 "reference": ref_col,
                 "name": name_col,
