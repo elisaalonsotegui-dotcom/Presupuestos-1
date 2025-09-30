@@ -170,6 +170,45 @@ const QuoteGenerator = () => {
                   data-testid="client-name-input"
                 />
               </div>
+              
+              <div>
+                <Label htmlFor="client-request">¿Qué necesita el cliente?</Label>
+                <Textarea
+                  id="client-request"
+                  value={quoteData.product_description}
+                  onChange={(e) => setQuoteData({ ...quoteData, product_description: e.target.value })}
+                  placeholder="Ejemplo: 100 camisetas personalizadas a 1 color en pecho"
+                  className="min-h-[80px]"
+                  data-testid="client-request-input"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Escribe exactamente lo que pide el cliente: cantidad, producto, personalización
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="quantity">Cantidad</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    value={quoteData.quantity}
+                    onChange={(e) => setQuoteData({ ...quoteData, quantity: e.target.value })}
+                    placeholder="100"
+                    data-testid="quantity-input"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="marking-desc">Tipo de marcaje</Label>
+                  <Input
+                    id="marking-desc"
+                    value={quoteData.marking_description}
+                    onChange={(e) => setQuoteData({ ...quoteData, marking_description: e.target.value })}
+                    placeholder="1 color en pecho"
+                    data-testid="marking-desc-input"
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
