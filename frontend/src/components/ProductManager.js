@@ -7,7 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { toast } from 'sonner';
-import { Upload, Package, Plus, Euro, Tag, FileText } from 'lucide-react';
+import { Upload, Package, Plus, Euro, Tag, FileText, Trash2, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
