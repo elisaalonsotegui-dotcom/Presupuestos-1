@@ -1021,8 +1021,11 @@ async def generate_quote(
     if not products:
         raise HTTPException(status_code=404, detail="No products found matching criteria")
     
+    if not products:
+        raise HTTPException(status_code=404, detail="No se pudieron procesar los productos encontrados")
+    
     # Sort products by price for tiered quotes
-    products.sort(key=lambda x: x["base_price"])
+    products.sort(key=lambda x: x.get("base_price", 0))
     
     # Get marking costs
     marking_costs = 0
