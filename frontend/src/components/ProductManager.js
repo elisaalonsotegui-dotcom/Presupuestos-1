@@ -10,7 +10,8 @@ import { toast } from 'sonner';
 import { Upload, Package, Plus, Euro, Tag, FileText, Trash2, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const ProductManager = () => {
   const [products, setProducts] = useState([]);
