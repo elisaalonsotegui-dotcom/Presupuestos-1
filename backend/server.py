@@ -312,6 +312,7 @@ async def upload_catalog(
         price_500_plus_col = find_column(column_mappings['price_500_plus'])
         price_2000_plus_col = find_column(column_mappings['price_2000_plus'])
         price_5000_plus_col = find_column(column_mappings['price_5000_plus'])
+        price_base_col = find_column(column_mappings['price_base'])
         print_code_col = find_column(column_mappings['print_code'])
         max_print_area_col = find_column(column_mappings['max_print_area'])
         image_url_col = find_column(column_mappings['image_url'])
