@@ -17,6 +17,9 @@ const QuoteGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [quoteData, setQuoteData] = useState({
     client_name: '',
+    product_description: '', // "100 camisetas personalizadas a 1 color en pecho"
+    quantity: '',
+    marking_description: '', // "1 color en pecho", "bordado en gorra", etc.
     search_criteria: {
       category: ''
     },
