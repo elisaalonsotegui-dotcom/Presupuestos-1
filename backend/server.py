@@ -339,6 +339,16 @@ async def upload_excel(
                 if max_print_area_col and pd.notna(row[max_print_area_col]):
                     printing_info['medida_maxima_grabacion'] = str(row[max_print_area_col])
                 
+                # Extract image URL
+                image_url = None
+                if image_url_col and pd.notna(row[image_url_col]):
+                    image_url = str(row[image_url_col]).strip()
+                    # Validate URL format
+                    if image_url and (image_url.startswith('http') or image_url.startswith('https')):
+                        pass  # Valid URL
+                    else:
+                        image_url = None
+                
                 # Build comprehensive characteristics
                 characteristics = {
                     'referencia': reference,
