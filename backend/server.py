@@ -528,6 +528,36 @@ async def download_template_simple():
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+@api_router.get("/download/plantilla-proveedor")  
+async def download_template_provider():
+    """Download provider Excel template with volume pricing"""
+    file_path = "/app/PLANTILLA_PROVEEDOR_2025.xlsx"
+    
+    if not os.path.exists(file_path):
+        # Create if doesn't exist (code from above)
+        pass
+    
+    return FileResponse(
+        path=file_path,
+        filename="PLANTILLA_PROVEEDOR_2025.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+@api_router.get("/download/plantilla-vacia")  
+async def download_template_empty():
+    """Download empty provider template"""
+    file_path = "/app/PLANTILLA_VACIA_PROVEEDOR.xlsx"
+    
+    if not os.path.exists(file_path):
+        # Create if doesn't exist (code from above)
+        pass
+    
+    return FileResponse(
+        path=file_path,
+        filename="PLANTILLA_VACIA_PROVEEDOR.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
 # Marking techniques routes
 @api_router.post("/marking-techniques", response_model=MarkingTechnique)
 async def create_marking_technique(
