@@ -345,7 +345,7 @@ async def upload_catalog(
             logger.info(f"Detected potential price columns: {detected_price_cols}")
         
         logger.info(f"Mapped columns - Ref: {ref_col}, Name: {name_col}, Desc: {desc_col}, Category: {category_col}")
-        logger.info(f"Price columns - 500-: {price_500_minus_col}, 500+: {price_500_plus_col}, 2000+: {price_2000_plus_col}, 5000+: {price_5000_plus_col}")
+        logger.info(f"Price columns - Base: {price_base_col}, 500-: {price_500_minus_col}, 500+: {price_500_plus_col}, 2000+: {price_2000_plus_col}, 5000+: {price_5000_plus_col}")
         logger.info(f"Other - Print: {print_code_col}, Image: {image_url_col}")
         
         products = []
