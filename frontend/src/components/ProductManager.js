@@ -337,6 +337,7 @@ const ProductManager = () => {
                     <TableHead className="font-semibold">Precio</TableHead>
                     <TableHead className="font-semibold">Categoría</TableHead>
                     <TableHead className="font-semibold">Características</TableHead>
+                    <TableHead className="font-semibold w-20">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
