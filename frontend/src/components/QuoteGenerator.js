@@ -79,15 +79,26 @@ const QuoteGenerator = () => {
       return;
     }
 
-    if (!quoteData.search_criteria.category) {
-      toast.error('Por favor selecciona una categoría de productos');
+    if (!quoteData.product_description) {
+      toast.error('Por favor describe qué necesita el cliente');
+      return;
+    }
+
+    if (!quoteData.quantity) {
+      toast.error('Por favor indica la cantidad');
       return;
     }
 
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/quotes/generate`, quoteData, {
+      const response = await axios.post(`${API}/quotes/generate-smart`, {
+        client_name: quoteData.client_name,
+        product_description: quoteData.product_description,
+        quantity: parseInt(quoteData.quantity),
+        marking_description: quoteData.marking_description,
+        marking_techniques: quoteData.marking_techniques
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
