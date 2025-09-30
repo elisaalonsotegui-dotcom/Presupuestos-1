@@ -1087,6 +1087,155 @@ async def get_quote(quote_id: str, current_user: User = Depends(get_current_user
         raise HTTPException(status_code=404, detail="Quote not found")
     return Quote(**quote)
 
+class SmartQuoteRequest(BaseModel):
+    client_name: str
+    product_description: str
+    quantity: int
+    marking_description: Optional[str] = ""
+    marking_techniques: List[str] = []
+
+@api_router.post("/quotes/generate-smart", response_model=Quote)
+async def generate_smart_quote(
+    quote_request: SmartQuoteRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Generate intelligent quotes based on natural language description"""
+    
+    # Extract keywords from product description to find matching products
+    description_lower = quote_request.product_description.lower()
+    keywords = []
+    
+    # Common product keywords mapping
+    product_keywords = {
+        'camiseta': ['camiseta', 'camisetas', 't-shirt', 'tshirt'],
+        'polo': ['polo', 'polos'],
+        'sudadera': ['sudadera', 'sudaderas', 'hoodie', 'hoodies'],
+        'gorra': ['gorra', 'gorras', 'cap', 'caps'],
+        'taza': ['taza', 'tazas', 'mug', 'mugs'],
+        'bolsa': ['bolsa', 'bolsas', 'bag', 'bags'],
+        'llavero': ['llavero', 'llaveros', 'keychain'],
+    }
+    
+    # Find matching product types
+    detected_categories = []
+    for product_type, synonyms in product_keywords.items():
+        if any(synonym in description_lower for synonym in synonyms):
+            detected_categories.append(product_type)
+    
+    # Search for products based on detected categories or general search
+    search_filter = {"user_id": current_user.id}
+    if detected_categories:
+        # Use regex to find products matching any detected category
+        category_pattern = "|".join(detected_categories)
+        search_filter["$or"] = [
+            {"name": {"$regex": category_pattern, "$options": "i"}},
+            {"category": {"$regex": category_pattern, "$options": "i"}},
+            {"description": {"$regex": category_pattern, "$options": "i"}}
+        ]
+    else:
+        # General search in all text fields
+        search_terms = description_lower.split()[:3]  # Use first 3 words
+        search_pattern = "|".join(search_terms)
+        search_filter["$or"] = [
+            {"name": {"$regex": search_pattern, "$options": "i"}},
+            {"description": {"$regex": search_pattern, "$options": "i"}},
+            {"category": {"$regex": search_pattern, "$options": "i"}}
+        ]
+    
+    # Get products with pagination to avoid performance issues
+    products = await db.products.find(search_filter).limit(100).to_list(length=100)
+    
+    if not products:
+        raise HTTPException(status_code=404, detail="No se encontraron productos que coincidan con la descripción")
+    
+    # Sort products by price for tiered quotes
+    products.sort(key=lambda x: x["base_price"])
+    
+    # Calculate marking costs
+    marking_costs_per_unit = 0
+    if quote_request.marking_techniques:
+        techniques = await db.marking_techniques.find({
+            "user_id": current_user.id,
+            "name": {"$in": quote_request.marking_techniques}
+        }).to_list(length=None)
+        marking_costs_per_unit = sum(t["cost_per_unit"] for t in techniques)
+    elif quote_request.marking_description:
+        # Try to auto-detect marking technique from description
+        marking_lower = quote_request.marking_description.lower()
+        auto_techniques = []
+        if 'bordado' in marking_lower:
+            auto_techniques.append('Bordado')
+        if 'serigraf' in marking_lower:
+            auto_techniques.append('Serigrafía')
+        if 'transfer' in marking_lower:
+            auto_techniques.append('Transfer')
+        
+        if auto_techniques:
+            techniques = await db.marking_techniques.find({
+                "user_id": current_user.id,
+                "name": {"$in": auto_techniques}
+            }).to_list(length=None)
+            marking_costs_per_unit = sum(t["cost_per_unit"] for t in techniques)
+    
+    # Generate three tiers based on quality/price
+    total_products = len(products)
+    quantity = quote_request.quantity
+    
+    # Basic: cheapest options (first 1/3)
+    basic_products = products[:max(1, total_products // 3)][:5]  # Limit to 5 products
+    basic_unit_price = sum(p["base_price"] for p in basic_products) / len(basic_products)
+    basic_total = (basic_unit_price + marking_costs_per_unit) * quantity
+    
+    # Medium: middle range (middle 1/3) 
+    medium_start = max(1, total_products // 3)
+    medium_end = max(2, (2 * total_products) // 3)
+    medium_products = products[medium_start:medium_end][:5] if medium_end > medium_start else products[1:6]
+    medium_unit_price = sum(p["base_price"] for p in medium_products) / len(medium_products) if medium_products else basic_unit_price * 1.5
+    medium_total = (medium_unit_price + marking_costs_per_unit * 1.2) * quantity
+    
+    # Premium: highest quality (last 1/3)
+    premium_start = max(2, (2 * total_products) // 3)
+    premium_products = products[premium_start:][:5]
+    if not premium_products:
+        premium_products = products[-3:]
+    premium_unit_price = sum(p["base_price"] for p in premium_products) / len(premium_products) if premium_products else medium_unit_price * 1.5
+    premium_total = (premium_unit_price + marking_costs_per_unit * 1.5) * quantity
+    
+    quote = Quote(
+        client_name=quote_request.client_name,
+        products=[{
+            "request": quote_request.product_description,
+            "quantity": quantity,
+            "marking": quote_request.marking_description,
+            "basic": {
+                "products": basic_products[:3],  # Show top 3 products
+                "unit_price": round(basic_unit_price, 2),
+                "marking_cost": round(marking_costs_per_unit, 2),
+                "total_unit": round(basic_unit_price + marking_costs_per_unit, 2)
+            },
+            "medium": {
+                "products": medium_products[:3],
+                "unit_price": round(medium_unit_price, 2),
+                "marking_cost": round(marking_costs_per_unit * 1.2, 2),
+                "total_unit": round(medium_unit_price + marking_costs_per_unit * 1.2, 2)
+            },
+            "premium": {
+                "products": premium_products[:3],
+                "unit_price": round(premium_unit_price, 2),
+                "marking_cost": round(marking_costs_per_unit * 1.5, 2),
+                "total_unit": round(premium_unit_price + marking_costs_per_unit * 1.5, 2)
+            }
+        }],
+        total_basic=round(basic_total, 2),
+        total_medium=round(medium_total, 2),
+        total_premium=round(premium_total, 2),
+        marking_techniques=quote_request.marking_techniques,
+        user_id=current_user.id
+    )
+    
+    await db.quotes.insert_one(quote.dict())
+    return quote
+
 # Include the router in the main app
 app.include_router(api_router)
 
