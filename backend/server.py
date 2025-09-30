@@ -1097,6 +1097,17 @@ class SmartQuoteRequest(BaseModel):
     marking_description: Optional[str] = ""
     marking_techniques: List[str] = []
 
+class ParsedRequest(BaseModel):
+    categoria: str
+    cantidad: int
+    perfil: Optional[str] = None  # bajo, medio, alto
+    tecnica: Optional[str] = None  # bordado, serigrafia, etc.
+    area_cm2: Optional[float] = None
+    cobertura: Optional[str] = None  # lleno, hueco
+    dimensiones: Optional[str] = None  # 7x7, 8x6, etc.
+    posicion: Optional[str] = None  # pecho, espalda, etc.
+    presupuesto_maximo: Optional[float] = None
+
 @api_router.post("/quotes/generate-smart", response_model=Quote)
 async def generate_smart_quote(
     quote_request: SmartQuoteRequest,
