@@ -213,6 +213,13 @@ const ProductManager = () => {
               <p className="text-xs text-blue-500 mt-2">
                 💡 El sistema detecta automáticamente las columnas y maneja precios por volumen
               </p>
+              <div className="bg-amber-50 p-3 rounded-lg mt-3">
+                <p className="text-xs text-amber-700 font-medium">⚠️ Problemas con CSV:</p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Si tu CSV da errores, intenta guardarlo como Excel (.xlsx) para mejor compatibilidad. 
+                  Los CSV con columnas inconsistentes pueden causar problemas.
+                </p>
+              </div>
             </div>
             <div className="bg-green-50 p-4 rounded-lg">
               <p className="text-sm text-green-700 font-medium mb-3">📥 Descargar Plantillas Excel:</p>
